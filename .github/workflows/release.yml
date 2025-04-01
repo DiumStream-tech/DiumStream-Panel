@@ -1,3 +1,5 @@
+name: Create Tag and Release from package.json
+
 on:
   push:
     branches:
@@ -8,44 +10,53 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Étape 1 : Vérifier le dépôt
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Important pour récupérer tous les tags Git
 
+      # Étape 2 : Lire la version depuis package.json
       - name: Get version from package.json
         id: get_version
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          if [[ -z \"$VERSION\" ]]; then
+          if [[ -z "$VERSION" ]]; then
             echo "Erreur : La version est vide ou invalide."
             exit 1
           fi
           echo "VERSION=$VERSION"
+          echo "::set-output name=version::$VERSION"
           echo "version=$VERSION" >> $GITHUB_ENV
 
+      # Étape 3 : Configurer Git pour créer un tag
       - name: Configure Git
         run: |
           git config --global user.name "DiumStream-tech"
           git config --global user.email "actions@github.com"
 
+      # Étape 4 : Vérifier si le tag existe déjà
       - name: Check if tag exists
         run: |
-          if git rev-parse "v${{ env.VERSION }}" >/dev/null 2>&1; then
-            echo "Le tag v${{ env.VERSION }} existe déjà."
+          if git rev-parse "v${{ steps.get_version.outputs.version }}" >/dev/null 2>&1; then
+            echo "Le tag v${{ steps.get_version.outputs.version }} existe déjà."
             exit 0
           fi
 
+      # Étape 5 : Créer un tag avec la version récupérée
       - name: Create Git Tag
         run: |
-          git tag -a "v${{ env.VERSION }}" -m "Release v${{ env.VERSION }}"
-          git push origin "v${{ env.VERSION }}"
+          git tag -a "v${{ steps.get_version.outputs.version }}" -m "Release v${{ steps.get_version.outputs.version }}"
+          git push origin "v${{ steps.get_version.outputs.version }}"
 
+      # Étape 6 : Créer une release GitHub associée au tag créé
       - name: Create GitHub Release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v${{ env.VERSION }}
-          release_name: v${{ env.VERSION }}
-          body: "Automated release for version v${{ env.VERSION }}"
+          tag_name: v${{ steps.get_version.outputs.version }}
+          release_name: "Release v${{ steps.get_version.outputs.version }}"
+          body: "Automated release for version v${{ steps.get_version.outputs.version }}"
           draft: false
           prerelease: false
