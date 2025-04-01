@@ -14,15 +14,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Étape 2 : Lire la version depuis version.txt
+      # Étape 2 : Lire et valider la version depuis version.txt
       - name: Read version from file
         id: read_version
         run: |
+          if [ ! -f "update/version.txt" ]; then
+            echo "Erreur : Le fichier update/version.txt est introuvable."
+            exit 1
+          fi
+
           VERSION=$(cat update/version.txt | tr -d '[:space:]')
           if [[ -z "$VERSION" ]]; then
             echo "Erreur : La version est vide ou invalide."
             exit 1
           fi
+
           echo "VERSION=$VERSION"
           echo "version=$VERSION" >> $GITHUB_ENV
 
