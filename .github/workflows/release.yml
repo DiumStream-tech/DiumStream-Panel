@@ -14,18 +14,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Étape 2 : Lire et valider la version depuis version.txt
-      - name: Read version from file
+      # Étape 2 : Lire et valider la version depuis le fichier distant version.txt
+      - name: Read version from remote file
         id: read_version
         run: |
-          if [ ! -f "update/version.txt" ]; then
-            echo "Erreur : Le fichier update/version.txt est introuvable."
+          # Télécharger le contenu brut du fichier version.txt depuis GitHub
+          VERSION=$(curl -s https://raw.githubusercontent.com/DiumStream-tech/DiumStream-Panel/main/update/version.txt | tr -d '[:space:]')
+          
+          # Vérifier si la version est vide ou invalide
+          if [[ -z "$VERSION" ]]; then
+            echo "Erreur : La version est vide ou invalide."
             exit 1
           fi
 
-          VERSION=$(cat update/version.txt | tr -d '[:space:]')
-          if [[ -z "$VERSION" ]]; then
-            echo "Erreur : La version est vide ou invalide."
+          # Vérifier si la version respecte le format SemVer (exemple : v1.0.0)
+          if ! [[ "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Erreur : La version doit être au format SemVer, par exemple v1.0.0."
             exit 1
           fi
 
@@ -38,13 +42,13 @@ jobs:
           git config --global user.name "DiumStream-tech"
           git config --global user.email "actions@github.com"
 
-      # Étape 4 : Créer un tag avec la version
+      # Étape 4 : Créer un tag avec la version récupérée
       - name: Create Git Tag
         run: |
           git tag -a "$VERSION" -m "Release $VERSION"
           git push origin "$VERSION"
 
-      # Étape 5 : Créer une release GitHub
+      # Étape 5 : Créer une release GitHub associée au tag créé
       - name: Create GitHub Release
         uses: actions/create-release@v1
         env:
