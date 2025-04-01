@@ -1,4 +1,4 @@
-name: Create Tag and Release from package.json
+name: Realse
 
 on:
   push:
