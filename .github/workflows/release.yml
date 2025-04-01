@@ -1,5 +1,3 @@
-name: Create Tag and Release from package.json
-
 on:
   push:
     branches:
@@ -10,11 +8,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Étape 1 : Vérifier le dépôt
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Étape 2 : Lire la version depuis package.json
       - name: Get version from package.json
         id: get_version
         run: |
@@ -26,13 +22,11 @@ jobs:
           echo "VERSION=$VERSION"
           echo "version=$VERSION" >> $GITHUB_ENV
 
-      # Étape 3 : Configurer Git pour créer un tag
       - name: Configure Git
         run: |
           git config --global user.name "DiumStream-tech"
           git config --global user.email "actions@github.com"
 
-      # Étape 4 : Vérifier si le tag existe déjà
       - name: Check if tag exists
         run: |
           if git rev-parse "v${{ env.VERSION }}" >/dev/null 2>&1; then
@@ -40,13 +34,11 @@ jobs:
             exit 0
           fi
 
-      # Étape 5 : Créer un tag avec la version récupérée
       - name: Create Git Tag
         run: |
           git tag -a "v${{ env.VERSION }}" -m "Release v${{ env.VERSION }}"
           git push origin "v${{ env.VERSION }}"
 
-      # Étape 6 : Créer une release GitHub associée au tag créé
       - name: Create GitHub Release
         uses: actions/create-release@v1
         env:
