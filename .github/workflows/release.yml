@@ -1,4 +1,4 @@
-name: Create Release from version.txt
+name: Create Tag and Release
 
 on:
   push:
@@ -10,23 +10,35 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Étape 1 : Vérifier le dépôt
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # Étape 2 : Lire la version depuis version.txt
       - name: Read version from file
         id: read_version
         run: |
-          VERSION=$(cat update/version.txt)
+          VERSION=$(cat update/version.txt | tr -d '[:space:]')
+          if [[ -z "$VERSION" ]]; then
+            echo "Erreur : La version est vide ou invalide."
+            exit 1
+          fi
           echo "VERSION=$VERSION"
           echo "version=$VERSION" >> $GITHUB_ENV
 
-      - name: Create Git Tag
+      # Étape 3 : Configurer Git pour créer un tag
+      - name: Configure Git
         run: |
           git config --global user.name "DiumStream-tech"
-          git config --global user.email "diumstream@gmail.com"
+          git config --global user.email "actions@github.com"
+
+      # Étape 4 : Créer un tag avec la version
+      - name: Create Git Tag
+        run: |
           git tag -a "$VERSION" -m "Release $VERSION"
           git push origin "$VERSION"
 
+      # Étape 5 : Créer une release GitHub
       - name: Create GitHub Release
         uses: actions/create-release@v1
         env:
