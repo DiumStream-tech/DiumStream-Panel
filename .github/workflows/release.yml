@@ -1,4 +1,4 @@
-name: Realse
+name: Release
 
 on:
   push:
@@ -57,6 +57,6 @@ jobs:
         with:
           tag_name: v${{ steps.get_version.outputs.version }}
           release_name: "Release v${{ steps.get_version.outputs.version }}"
-          body: "Automated release for version v${{ steps.get_version.outputs.version }}"
+          body: "Update v${{ steps.get_version.outputs.version }}"
           draft: false
           prerelease: false
