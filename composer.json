@@ -1,0 +1,6 @@
+{
+    "require": {
+        "endroid/qr-code": "^5.1",
+        "sonata-project/google-authenticator": "^2.3"
+    }
+}

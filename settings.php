@@ -1,5 +1,4 @@
 <?php
-require_once './utils/logs.php';
 session_start();
 $configFilePath = './conn.php';
 if (!file_exists($configFilePath)) {
@@ -28,16 +27,29 @@ if (file_exists($file)) {
     exit();
 }
 require_once './connexion_bdd.php';
-
-$pdo->exec("SET NAMES 'utf8mb4' COLLATE 'utf8mb4_general_ci'");
-
 require('./auth.php');
+
+function ajouter_log($user, $action) {
+    global $pdo;
+    $stmt = $pdo->prepare("INSERT INTO logs (user, timestamp, action) VALUES (:user, :timestamp, :action)");
+    $stmt->execute([
+        ':user' => $user,
+        ':timestamp' => date('Y-m-d H:i:s'),
+        ':action' => $action
+    ]);
+}
+
 if (isset($_POST['logout'])) {
+    if (isset($_SESSION['user_email'])) {
+        ajouter_log($_SESSION['user_email'], "Déconnexion");
+    }
+    
     session_unset();
     session_destroy();
     header('Location: account/connexion');
     exit();
 }
+
 $sql = "SELECT * FROM options";
 $stmt = $pdo->query($sql);
 
@@ -68,9 +80,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $stmt->execute();
 
                 $action = "Modification du rôle $roleName avec l'image de fond $backgroundUrl";
-                logAction($_SESSION['user_email'], $action);
+                ajouter_log($_SESSION['user_email'], $action);
             }
-        }    
+        }
     }elseif (isset($_POST["submit_maintenance"])) {
         $maintenance = isset($_POST["maintenance"]) ? 1 : 0;
         $sql = "UPDATE options SET maintenance = ?";
@@ -83,7 +95,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $stmt->execute();
 
         $action = "Modification du mode maintenance avec message : $maintenance_message";
-        logAction($_SESSION['user_email'], $action);
+        ajouter_log($_SESSION['user_email'], $action);
 
     } elseif (isset($_POST["submit_server_info"])) {
         $server_name = $_POST["server_name"];
@@ -98,7 +110,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $stmt->execute([$server_name, $server_ip, $server_port, $server_img]);
 
         $action = "Modification des informations du serveur : $server_name, $server_ip:$server_port";
-        logAction($_SESSION['user_email'], $action);
+        ajouter_log($_SESSION['user_email'], $action);
 
     }elseif (isset($_POST["submit_loader_settings"])) {
         
@@ -116,10 +128,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $stmt->execute([$loader_type, $loader_build_version, $loader_forge_version, $loader_activation]);
 
             $action = "Modification des paramètres de chargement : $loader_type, version $loader_build_version, activation $loader_activation";
-            logAction($_SESSION['user_email'], $action);
+            ajouter_log($_SESSION['user_email'], $action);
         
     }elseif (isset($_POST["submit_rpc_settings"])) {
-        $rpc_id = $_POST["rpc_id"];
         $rpc_details = htmlspecialchars($_POST["rpc_details"], ENT_QUOTES, 'UTF-8');
         $rpc_state = htmlspecialchars($_POST["rpc_state"], ENT_QUOTES, 'UTF-8');
         $rpc_large_image = $_POST["rpc_large_image"];
@@ -137,7 +148,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $stmt->execute([$rpc_id, $rpc_details, $rpc_state, $rpc_large_image, $rpc_large_text, $rpc_small_image ,$rpc_small_text, $rpc_activation, $rpc_button1, $rpc_button1_url, $rpc_button2, $rpc_button2_url]);
 
         $action = "Modification des paramètres RPC : ID $rpc_id, détails $rpc_details, état $rpc_state, ID image large $rpc_large_image, texte large $rpc_large_text, ID image small $rpc_small_image, texte petit $rpc_small_text, activation $rpc_activation, bouton 1 $rpc_button1, URL bouton 1 $rpc_button1_url, bouton 2 $rpc_button2, URL bouton 2 $rpc_button2_url";
-        logAction($_SESSION['user_email'], $action);
+        ajouter_log($_SESSION['user_email'], $action);
     
     }elseif (isset($_POST["submit_splash_info"])) {
         $splash = $_POST["splash"];
@@ -148,7 +159,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $stmt->execute([$splash, $splash_author]);
 
         $action = "Modification de l'écran de chargement : $splash, auteur $splash_author";
-        logAction($_SESSION['user_email'], $action);
+        ajouter_log($_SESSION['user_email'], $action);
     
     }elseif (isset($_POST["submit_ignored_folder_data"])) {
         $ignored_folder = $_POST["ignored_folder"];
@@ -171,7 +182,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         $action = "Mise à jour des dossiers ignorés : $ignored_folder";
-        logAction($_SESSION['user_email'], $action);
+        ajouter_log($_SESSION['user_email'], $action);
 
     }elseif (isset($_POST["submit_whitelist"])) {
         $whitelist = isset($_POST["whitelist_activation"]) ? 1 : 0;
@@ -207,7 +218,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $stmtRoles->execute();
         }
         $action = "Mise à jour de la liste blanche : activation $whitelist, utilisateurs $whitelistUsers, rôles $whitelistRoles";
-        logAction($_SESSION['user_email'], $action);
+        ajouter_log($_SESSION['user_email'], $action);
     }
     elseif (isset($_POST["submit_general_settings"])) {
         
@@ -239,7 +250,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $mods = isset($_POST["mods_enabled"]) ? 1 : 0;
             $sql = "UPDATE options SET mods_enabled = ?";
             $stmt = $pdo->prepare($sql);
-            $stmt->execute([$mods]);    
+            $stmt->execute([$mods]);
           
             $file_verification = isset($_POST["file_verification"]) ? 1 : 0;
             $sql = "UPDATE options SET file_verification = ?";
@@ -259,10 +270,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $stmt->execute([$ram_min, $ram_max]);
         
             $action = "Modification des paramètres RAM : RAM min $ram_min MB, RAM max $ram_max MB";
-            logAction($_SESSION['user_email'], $action);
+            ajouter_log($_SESSION['user_email'], $action);
 
             $action = "Modification des paramètres généraux : rôle $role, argent $money, dossier de jeu $game_folder_name, Azuriom $azuriom, mods activés $mods, vérification des fichiers $file_verification, Java intégré $embedded_java";
-            logAction($_SESSION['user_email'], $action);
+            ajouter_log($_SESSION['user_email'], $action);
 }elseif (isset($_POST["add_optional"])) {
     $index = $_POST["add_optional"];
     $modFile = $_POST["file"];
@@ -276,7 +287,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $stmt->execute([$modFile, $modName, $modDescription, $modIcon, 1, $modRecommended]);
 
     $action = "Ajout du mod optionnel : " . $modName;
-    logAction($_SESSION['user_email'], $action);
+    ajouter_log($_SESSION['user_email'], $action);
 } elseif (isset($_POST["update_optional"])) {
     $modId = $_POST["mod_id"];
     $modName = $_POST["optional_name"];
@@ -297,7 +308,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $stmt->execute([$modName, $modDescription, $modIcon, $modRecommended, $modId]);
 
     $action = "Modification du mod optionnel : $modName";
-    logAction($_SESSION['user_email'], $action);
+    ajouter_log($_SESSION['user_email'], $action);
 } elseif (isset($_POST["delete_optional"])) {
     $modId = $_POST["mod_id"];
 
@@ -306,7 +317,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $stmt->execute([$modId]);
 
     $action = "Suppression d'un mod optionnel";
-    logAction($_SESSION['user_email'], $action);
+    ajouter_log($_SESSION['user_email'], $action);
 }elseif (isset($_POST["submit_alert_settings"])) {
     $alert_activation = isset($_POST["alert_activation"]) ? 1 : 0;
     $alert_scroll = isset($_POST["alert_scroll"]) ? 1 : 0;
@@ -317,7 +328,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $stmt->execute([$alert_activation, $alert_scroll, $alert_msg]);
 
     $action = "Modification des paramètres d'alerte : activation $alert_activation, scroll $alert_scroll, message $alert_msg";
-    logAction($_SESSION['user_email'], $action);
+    ajouter_log($_SESSION['user_email'], $action);
 }elseif (isset($_POST["submit_video_settings"])) {
     $video_activation = isset($_POST["video_activation"]) ? 1 : 0;
     $video_url = $_POST["video_url"];
@@ -328,10 +339,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $stmt->execute([$video_activation, $video_url, $video_type]);
 
     $action = "Modification des paramètres vidéos : activation $video_activation, url $video_url, type $video_type";
-    logAction($_SESSION['user_email'], $action);
+    ajouter_log($_SESSION['user_email'], $action);
 }
-
-
 }
 $sql = "SELECT * FROM options";
 $stmt = $pdo->query($sql);
@@ -426,8 +435,17 @@ function getCurrentVersion() {
     return trim(file_get_contents('update/version.txt'));
 }
 
+function getUpdateInfo() {
+    $updateJsonPath = 'update/update.json';
+    if (!file_exists($updateJsonPath)) {
+        throw new Exception('Fichier update.json introuvable.');
+    }
+    return json_decode(file_get_contents($updateJsonPath), true);
+}
+
 function getLatestVersion() {
-    $url = 'https://raw.githubusercontent.com/Riptiaz/CentralCorp-Panel/main/update/version.txt';
+    $updateInfo = getUpdateInfo();
+    $url = $updateInfo['version_url'];
     $opts = [
         "http" => [
             "method" => "GET",
@@ -468,13 +486,19 @@ function extractYouTubeVideoId($url) {
 require_once './ui/header.php';
 ?>
 <style>
- .scroll-to-top {
+ .scroll-button {
       position: fixed;
-      bottom: 2rem;
       right: 2rem;
       z-index: 10;
+      display: none;
     }
-  </style>
+ .scroll-to-top {
+      bottom: 5rem;
+    }
+ .scroll-to-bottom {
+      bottom: 2rem;
+    }
+</style>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <?php if ($isNewVersionAvailable): ?>
 <script>
@@ -525,18 +549,53 @@ Swal.fire({
 });
 </script>
 <?php endif; ?>
-   <a href="#" class="scroll-to-top bg-gray-900 hover:bg-blue-600 text-white py-2 px-4 rounded-full shadow-lg transition duration-300 ease-in-out">
+   <a href="#" class="scroll-button scroll-to-top bg-gray-900 hover:bg-blue-600 text-white py-2 px-4 rounded-full shadow-lg transition duration-300 ease-in-out">
     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 inline-block align-middle" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
     </svg>
-  </a>
+   </a>
+   <a href="#" class="scroll-button scroll-to-bottom bg-gray-900 hover:bg-blue-600 text-white py-2 px-4 rounded-full shadow-lg transition duration-300 ease-in-out">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 inline-block align-middle" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+    </svg>
+   </a>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var scrollToTopBtn = document.querySelector('.scroll-to-top');
+    var scrollToBottomBtn = document.querySelector('.scroll-to-bottom');
+
+    window.addEventListener('scroll', function() {
+        var scrollTotal = document.documentElement.scrollHeight - window.innerHeight;
+        if ((window.pageYOffset > 100) && (window.pageYOffset < scrollTotal - 100)) {
+            scrollToTopBtn.style.display = 'block';
+            scrollToBottomBtn.style.display = 'block';
+        } else if (window.pageYOffset <= 100) {
+            scrollToTopBtn.style.display = 'none';
+            scrollToBottomBtn.style.display = 'block';
+        } else {
+            scrollToTopBtn.style.display = 'block';
+            scrollToBottomBtn.style.display = 'none';
+        }
+    });
+
+    scrollToTopBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        window.scrollTo({top: 0, behavior: 'smooth'});
+    });
+
+    scrollToBottomBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        window.scrollTo({top: document.documentElement.scrollHeight, behavior: 'smooth'});
+    });
+});
+</script>
 <?php require_once './function/main.php';?>
 <?php require_once './function/serveur.php';?>
 <?php require_once './function/splash.php';?>
-<?php require_once './function/loader.php';?>           
-<?php require_once './function/rpc.php';?>           
+<?php require_once './function/loader.php';?>
+<?php require_once './function/rpc.php';?>
 <?php require_once './function/maintenance.php';?>
-<?php require_once './function/whitelist.php';?>  
+<?php require_once './function/whitelist.php';?>
 <?php require_once './function/roles.php';?>
 <?php require_once './function/ignore.php';?>
 <?php require_once './function/mods.php';?>

@@ -7,17 +7,19 @@ if (!file_exists($configFilePath)) {
     exit();
 }
 require_once '../connexion_bdd.php';
-if (isset($_SESSION['user_token'])) {
-  $stmt = $pdo->prepare("SELECT * FROM users WHERE token = :token");
-  $stmt->bindParam(':token', $_SESSION['user_token']);
-  $stmt->execute();
-  $utilisateur = $stmt->fetch();
 
-  if ($utilisateur) {
-      header('Location: accueil.php');
-      exit();
-  }
+if (isset($_SESSION['user_token'])) {
+    $stmt = $pdo->prepare("SELECT * FROM users WHERE token = :token");
+    $stmt->bindParam(':token', $_SESSION['user_token']);
+    $stmt->execute();
+    $utilisateur = $stmt->fetch();
+
+    if ($utilisateur) {
+        header('Location: accueil.php');
+        exit();
+    }
 }
+
 $sql = "SELECT COUNT(*) as count FROM users";
 $stmt = $pdo->prepare($sql);
 $stmt->execute();
@@ -27,6 +29,7 @@ if ($row['count'] > 0) {
     header('Location: connexion');
     exit();
 }
+
 if (isset($_POST['submit'])) {
     $email = trim($_POST['email']);
     $password = trim($_POST['password']);
@@ -46,25 +49,16 @@ if (isset($_POST['submit'])) {
         $errors[] = "Les mots de passe ne correspondent pas.";
     }
 
-    require_once '../connexion_bdd.php';
-
-    $query = "SELECT id FROM users WHERE email = :email";
-    $stmt = $pdo->prepare($query);
-    $stmt->execute(array('email' => $email));
-
-    if ($stmt->rowCount() > 0) {
-        $errors[] = "Adresse email déjà utilisée.";
-    }
-
     if (count($errors) === 0) {
-        $hashed_password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-        $query = "INSERT INTO users (email, password) VALUES (:email, :password)";
+        $query = "INSERT INTO users (email, password, permissions) VALUES (:email, :password, :permissions)";
         $stmt = $pdo->prepare($query);
 
         $stmt->execute(array(
             'email' => $email,
-            'password' => $hashed_password
+            'password' => $hashed_password,
+            'permissions' => '*'
         ));
 
         header('Location: connexion?register=success');
@@ -79,7 +73,7 @@ if (isset($_POST['submit'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Inscription</title>
+    <title>Configuration du compte administrateur</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 </head>
@@ -87,7 +81,8 @@ if (isset($_POST['submit'])) {
     <div class="container mx-auto mt-20 p-6 bg-gray-900 text-white border border-gray-700 rounded-lg shadow-lg">
         <div class="flex justify-center">
             <div class="w-full max-w-md">
-                <h2 class="text-3xl font-bold mb-6 text-center">Inscription</h2>
+                <h2 class="text-3xl font-bold mb-6 text-center">Configuration du compte administrateur</h2>
+                <p class="mb-4 text-center text-gray-400">Créez le compte administrateur principal pour votre panel.</p>
                 <?php if (isset($errors) && count($errors) > 0) : ?>
                     <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
                         <ul>
@@ -97,9 +92,9 @@ if (isset($_POST['submit'])) {
                         </ul>
                     </div>
                 <?php endif; ?>
-                <form method="post" action="register">
+                <form method="post" action="">
                     <div class="mb-4">
-                        <label for="email" class="block text-gray-400 text-sm font-medium mb-2">E-mail :</label>
+                        <label for="email" class="block text-gray-400 text-sm font-medium mb-2">E-mail de l'administrateur :</label>
                         <div class="relative">
                             <input type="email" name="email" id="email" class="form-input mt-1 block w-full rounded-lg border-gray-600 bg-gray-700 text-gray-200 p-2 focus:ring-indigo-500 focus:border-indigo-500" required>
                             <i class="bi bi-envelope-fill absolute right-3 top-2.5 text-gray-400"></i>
@@ -114,7 +109,7 @@ if (isset($_POST['submit'])) {
                         </div>
                     </div>
                     <div class="mb-4">
-                        <label for="confirm_password" class="block text-gray-400 text-sm font-medium mb-2">Confirmez votre mot de passe :</label>
+                        <label for="confirm_password" class="block text-gray-400 text-sm font-medium mb-2">Confirmez le mot de passe :</label>
                         <div class="relative">
                             <input type="password" name="confirm_password" id="confirm_password" class="form-input mt-1 block w-full rounded-lg border-gray-600 bg-gray-700 text-gray-200 p-2 focus:ring-indigo-500 focus:border-indigo-500" required>
                             <i class="bi bi-lock-fill absolute right-10 top-2.5 text-gray-400"></i>
@@ -123,7 +118,7 @@ if (isset($_POST['submit'])) {
                     </div>
                     <div class="flex items-center justify-center">
                         <button type="submit" name="submit" class="bg-indigo-500 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50">
-                            S'inscrire
+                            Créer le compte administrateur
                         </button>
                     </div>
                 </form>

@@ -15,6 +15,13 @@ SET time_zone = "+00:00";
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
 /*!40101 SET NAMES utf8 */;
+CREATE TABLE `logs` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user` varchar(255) NOT NULL,
+  `timestamp` datetime NOT NULL,
+  `action` text NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
 CREATE TABLE `ignored_folders` (
   `folder_name` text NOT NULL,
@@ -119,6 +126,9 @@ CREATE TABLE `users` (
   `password` varchar(255) NOT NULL,
   `email` varchar(255) NOT NULL,
   `token` varchar(255) DEFAULT NULL,
+  `permissions` varchar(255) DEFAULT NULL,
+  `two_factor_enabled` tinyint(1) NOT NULL DEFAULT 0,
+  `two_factor_secret` varchar(32) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
@@ -129,7 +139,7 @@ CREATE TABLE `whitelist` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
 INSERT INTO `whitelist` (`id`, `users`) VALUES
-(116, 'Riptiaz');
+(116, 'DiumStream');
 
 CREATE TABLE `whitelist_roles` (
   `id` int(11) NOT NULL AUTO_INCREMENT,

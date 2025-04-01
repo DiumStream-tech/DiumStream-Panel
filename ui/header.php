@@ -7,13 +7,32 @@
     <title>Panel</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.8.1/font/bootstrap-icons.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.css">
+    <style>
+    @media (max-width: 1536px) {
+        .header-buttons-container {
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+        .logout-button {
+            order: 3;
+            margin-top: 0.5rem;
+            width: 100%;
+        }
+    }
+        ::-webkit-scrollbar {
+            display: none;
+        }
+        body {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    
+    </style>
 </head>
 <body class="bg-gray-800 text-white">
     <nav class="bg-gray-900 p-4 static w-full z-10 top-0 shadow">
         <div class="container mx-auto flex flex-wrap items-center justify-between">
-            <a class="text-xl font-bold" href="settings#">Panel</a>
+            <a class="text-xl font-bold" href="settings">Panel</a>
             <button class="text-white 2xl:hidden" id="nav-toggle">
                 <i class="bi bi-list"></i>
             </button>
@@ -50,8 +69,8 @@
                         </a>
                     </li>
                 </ul>
-                <div class="flex items-center space-x-4 ml-auto mt-4 2xl:mt-0 relative">
-                    <div class="relative inline-block text-left">
+                <div class="flex flex-col 2xl:flex-row items-center space-y-4 2xl:space-y-0 2xl:space-x-4 mt-4 2xl:mt-0 header-buttons-container">
+                    <div class="relative inline-block text-left w-full 2xl:w-auto">
                     <button type="button" class="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-yellow-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-yellow-700" id="menu-button-other" aria-expanded="true" aria-haspopup="true">
                     <i class="bi bi-three-dots mr-2"></i> Autres
                             <svg class="-mr-1 h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -80,9 +99,7 @@
                                 </a>
                             </div>
                         </div>
-                    </div>
-                    
-                    <div class="relative inline-block text-left">
+                    </div>          <div class="relative inline-block text-left w-full 2xl:w-auto">
                     <button type="button" class="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700" id="menu-button-settings" aria-expanded="true" aria-haspopup="true">
                             <i class="bi bi-sliders mr-2"></i> Paramètres Panel
                             <svg class="-mr-1 h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -91,20 +108,14 @@
                         </button>
                         <div id="settings-panel-dropdown" class="hidden absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="menu-button-settings" tabindex="-1">
                             <div class="py-1" role="none">
-                                <form id="importForm" method="post" action="utils/import.php" enctype="multipart/form-data">
-                                <label class="block px-4 py-2 hover:bg-gray-100 text-gray-700 cursor-pointer" role="menuitem" tabindex="-1" id="menu-item-0">
-                                        <i class="bi bi-file-earmark-arrow-up mr-2"></i> Importer
-                                        <input type="file" id="jsonFileInput" name="json_file" class="hidden" accept=".json" required>
-                                    </label>
-                                </form>
-                                <a href="./utils/export" class="block px-4 py-2 text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1" id="menu-item-1">
-                                    <i class="bi bi-file-earmark-arrow-down mr-2"></i> Exporter
-                                </a>                         
-                                <a href="file" class="block px-4 py-2 text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1" id="menu-item-5">
-                                    <i class="bi bi-folder mr-2"></i> Fichiers Panel
-                                </a>                                
+                                <a href="utils/import_export.php" class="block px-4 py-2 text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1" id="menu-item-3">
+                                    <i class="bi bi-arrow-down-up mr-2"></i> Importer/Exporter
+                                </a>
                                 <a href="account/new/register" class="block px-4 py-2 text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1" id="menu-item-4">
                                     <i class="bi bi-person-plus mr-2"></i> Ajouter un utilisateur
+                                </a>
+                                <a href="file" class="block px-4 py-2 text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1" id="menu-item-5">
+                                    <i class="bi bi-folder mr-2"></i> Fichiers Panel
                                 </a>
                                 <a href="logs/view" class="block px-4 py-2 text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1" id="menu-item-5">
                                     <i class="bi bi-journal-text mr-2"></i> Logs
@@ -112,20 +123,22 @@
                             </div>
                         </div>
                     </div>
-                    <form class="flex items-center" method="post" action="">
-                        <button class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded flex items-center space-x-2" type="submit" name="logout">
+                    <form class="w-full 2xl:w-auto logout-button" method="post" action="">
+                        <a href="account/mon_compte" class="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-700">
+                            <i class="bi bi-person-circle mr-2"></i> Mon Compte
+                        </a>
+                        </form> 
+                        <form class="w-full 2xl:w-auto logout-button" method="post" action="">
+                            <button class="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700" type="submit" name="logout">
                             <i class="bi bi-box-arrow-left mr-2"></i> Déconnexion
                         </button>
-                    </form>
+                    </form>  
                 </div>
             </div>
         </div>
     </nav>
-    <script>
-        document.getElementById('jsonFileInput').addEventListener('change', function() {
-            document.getElementById('importForm').submit();
-        });
 
+    <script>
         document.getElementById('nav-toggle').addEventListener('click', function() {
             var navContent = document.getElementById('nav-content');
             navContent.classList.toggle('hidden');
@@ -155,7 +168,5 @@
             }
         });
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.js"></script>
 </body>
 </html>
