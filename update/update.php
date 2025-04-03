@@ -22,7 +22,16 @@ function ajouter_log($user, $action) {
 }
 
 function getCurrentVersion() {
-    return trim(file_get_contents('version.txt'));
+    $versionFile = __DIR__ . '/../update/version.json';
+    if (!file_exists($versionFile)) {
+        throw new Exception('Fichier version.json introuvable.');
+    }
+    $fileContent = file_get_contents($versionFile);
+    $jsonData = json_decode($fileContent, true);
+    if (json_last_error() !== JSON_ERROR_NONE || !isset($jsonData['version'])) {
+        throw new Exception('Erreur lors de la lecture ou du décodage du fichier version.json.');
+    }
+    return trim($jsonData['version']);
 }
 
 function getUpdateInfo() {
@@ -82,19 +91,6 @@ function updateFiles() {
                     rename($file, $destination);
                 }
             }
-            $files = new RecursiveIteratorIterator(
-                new RecursiveDirectoryIterator($innerFolder, RecursiveDirectoryIterator::SKIP_DOTS),
-                RecursiveIteratorIterator::CHILD_FIRST
-            );
-
-            foreach ($files as $file) {
-                if ($file->isDir()) {
-                    rmdir($file->getRealPath());
-                } else {
-                    unlink($file->getRealPath());
-                }
-            }
-
             rmdir($innerFolder);
         }
         rmdir($extractPath);
@@ -161,24 +157,24 @@ function updateDatabase($pdo) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_button'])) {
-    $currentVersion = getCurrentVersion();
-    $latestVersion = getLatestVersion();
+    try {
+        $currentVersion = getCurrentVersion();
+        $latestVersion = getLatestVersion();
 
-    if (isNewVersionAvailable($currentVersion, $latestVersion)) {
-        if (updateFiles()) {
-            $dbUpdateResult = updateDatabase($pdo);
-            if ($dbUpdateResult['success']) {
-                file_put_contents('version.txt', $latestVersion);
-                ajouter_log($_SESSION['user_email'], "Mise à jour effectuée de la version $currentVersion à $latestVersion");
-                echo json_encode(['success' => true, 'message' => "Mise à jour terminée avec succès à la version $latestVersion."]);
+        if (isNewVersionAvailable($currentVersion, $latestVersion)) {
+            if (updateFiles()) {
+                // Mettre à jour la base de données et enregistrer la nouvelle version
+                file_put_contents(__DIR__ . '/../update/version.json', json_encode(['version' => $latestVersion], JSON_PRETTY_PRINT));
+                ajouter_log($_SESSION['user_email'], "Mise à jour effectuée de la version {$currentVersion} à {$latestVersion}");
+                echo json_encode(['success' => true, 'message' => "Mise à jour terminée avec succès à la version {$latestVersion}."]);
             } else {
-                echo json_encode($dbUpdateResult);
+                echo json_encode(['success' => false, 'message' => 'Échec de la mise à jour des fichiers.']);
             }
         } else {
-            echo json_encode(['success' => false, 'message' => 'Échec de la mise à jour des fichiers.']);
+            echo json_encode(['success' => true, 'message' => 'Aucune mise à jour disponible.']);
         }
-    } else {
-        echo json_encode(['success' => true, 'message' => 'Aucune mise à jour disponible.']);
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => "Erreur : {$e->getMessage()}"]);
     }
 } else {
     echo json_encode(['success' => false, 'message' => 'Requête non valide.']);

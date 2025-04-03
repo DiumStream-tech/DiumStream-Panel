@@ -432,7 +432,7 @@ $optionalModsStmt = $pdo->query($sql);
 $optionalMods = $optionalModsStmt->fetchAll(PDO::FETCH_ASSOC);
 
 function getCurrentVersion() {
-    return trim(file_get_contents('update/version.txt'));
+    return trim(file_get_contents('update/version.json'));
 }
 
 function getUpdateInfo() {

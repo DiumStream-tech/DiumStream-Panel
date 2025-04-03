@@ -1,17 +1,22 @@
 <?php
-$versionFile = __DIR__ . '/../update/version.txt';
+$versionFile = __DIR__ . '/../update/version.json';
 
 $currentVersion = 'Inconnue';
 
 if (file_exists($versionFile)) {
     $fileContent = file_get_contents($versionFile);
     if ($fileContent !== false) {
-        $currentVersion = trim($fileContent);
+        $jsonData = json_decode($fileContent, true);
+        if (json_last_error() === JSON_ERROR_NONE && isset($jsonData['version'])) {
+            $currentVersion = trim($jsonData['version']);
+        } else {
+            error_log("Erreur lors du décodage du fichier version.json ou clé 'version' manquante.");
+        }
     } else {
-        error_log("Impossible de lire le contenu du fichier version.txt");
+        error_log("Impossible de lire le contenu du fichier version.json");
     }
 } else {
-    error_log("Le fichier version.txt n'existe pas à l'emplacement spécifié");
+    error_log("Le fichier version.json n'existe pas à l'emplacement spécifié");
 }
 ?>
 

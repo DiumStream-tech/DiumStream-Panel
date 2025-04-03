@@ -10,18 +10,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Étape 1 : Vérifier le dépôt
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # Important pour récupérer tous les tags Git
+          fetch-depth: 0
 
-      # Étape 2 : Lire la version depuis package.json
-      - name: Get version from package.json
+      - name: Get version from update/version.json
         id: get_version
         run: |
-          VERSION=$(node -p "require('./package.json').version")
-          if [[ -z "$VERSION" ]]; then
+          VERSION=$(jq -r '.version' < update/version.json)
+          if [[ -z "$VERSION" || "$VERSION" == "null" ]]; then
             echo "Erreur : La version est vide ou invalide."
             exit 1
           fi
@@ -29,13 +27,11 @@ jobs:
           echo "::set-output name=version::$VERSION"
           echo "version=$VERSION" >> $GITHUB_ENV
 
-      # Étape 3 : Configurer Git pour créer un tag
       - name: Configure Git
         run: |
           git config --global user.name "DiumStream-tech"
           git config --global user.email "actions@github.com"
 
-      # Étape 4 : Vérifier si le tag existe déjà
       - name: Check if tag exists
         run: |
           if git rev-parse "v${{ steps.get_version.outputs.version }}" >/dev/null 2>&1; then
@@ -43,13 +39,11 @@ jobs:
             exit 0
           fi
 
-      # Étape 5 : Créer un tag avec la version récupérée
       - name: Create Git Tag
         run: |
           git tag -a "v${{ steps.get_version.outputs.version }}" -m "Release v${{ steps.get_version.outputs.version }}"
           git push origin "v${{ steps.get_version.outputs.version }}"
 
-      # Étape 6 : Créer une release GitHub associée au tag créé
       - name: Create GitHub Release
         uses: actions/create-release@v1
         env:
