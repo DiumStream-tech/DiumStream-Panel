@@ -75,12 +75,23 @@ function isNewVersionAvailable($currentVersion, $latestVersion) {
     return version_compare($currentVersion, $latestVersion, '<');
 }
 
+function deleteFolderRecursive($folderPath) {
+    foreach (glob("$folderPath/*") as $item) {
+        if (is_dir($item)) {
+            deleteFolderRecursive($item);
+            rmdir($item);
+        } else {
+            unlink($item);
+        }
+    }
+}
+
 function updateFiles() {
     $updateInfo = getUpdateInfo();
     if (!isset($updateInfo['zip_url'])) {
         throw new Exception('Clé "zip_url" manquante dans update.json.');
     }
-    
+
     $zipFile = 'update.zip';
     $url = $updateInfo['zip_url'];
 
@@ -105,9 +116,9 @@ function updateFiles() {
                     rename($file->getPathname(), $destination);
                 }
             }
-            rmdir($innerFolder);
+            deleteFolderRecursive($innerFolder);
         }
-        rmdir($extractPath);
+        deleteFolderRecursive($extractPath);
 
         return true;
     } else {
@@ -117,9 +128,9 @@ function updateFiles() {
 
 function updateDatabase() {
     global $pdo;
-    
+
     $sqlFilePath = __DIR__ . '/../utils/panel.sql';
-    
+
     if (!file_exists($sqlFilePath)) {
         throw new Exception("Fichier panel.sql introuvable.");
     }
@@ -130,9 +141,9 @@ function updateDatabase() {
                 $pdo->exec(trim($query));
             }
         }
-        
+
         return ['success' => true, 'message' => 'Base de données mise à jour avec succès.'];
-        
+
     } catch (Exception $e) {
         return ['success' => false, 'message' => "Erreur lors de la mise à jour de la base de données : {$e->getMessage()}"];
     }
@@ -152,19 +163,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif (isset($_POST['update_button'])) {
             updateFiles();
             updateDatabase();
-            
+
             file_put_contents(__DIR__ . '/../update/version.json', json_encode(['version' => getLatestVersion()], JSON_PRETTY_PRINT));
-            
+
             ajouter_log($_SESSION['user_email'], "Mise à jour effectuée.");
-            
+
             echo json_encode(['success' => true, 'message' => "Mise à jour effectuée avec succès."]);
         } else {
             echo json_encode(['success' => false, 'message' => 'Requête non valide.']);
         }
-        
+
     } catch (Exception $e) {
         echo json_encode(['success' => false, 'message' => "Erreur : {$e->getMessage()}"]);
-        
+
     }
 } else {
     echo json_encode(['success' => false, 'message' => 'Requête non valide.']);
