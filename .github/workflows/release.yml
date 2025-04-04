@@ -18,7 +18,7 @@ jobs:
       - name: Get version from update/json/version.json
         id: get_version
         run: |
-          VERSION=$(jq -r '.version' < update/version.json)
+          VERSION=$(jq -r '.version' < update/json/version.json)
           if [[ -z "$VERSION" || "$VERSION" == "null" ]]; then
             echo "Erreur : La version est vide ou invalide."
             exit 1
