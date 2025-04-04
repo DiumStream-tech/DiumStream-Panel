@@ -1,38 +1,13 @@
 {
     "versions": [
         {
-            "version": "0.1.9",
+            "version": "0.2.0",
             "date": "04-04-2025",
             "changes": [
                 {
-                    "type": "UI-UX",
-                    "title": "Refonte UI",
-                    "description": "Refonte de l'interface de File"
-                },
-                {
-                    "type": "UI-UX",
-                    "title": "Refonte UI",
-                    "description": "Refonte de l'interface de Setdb"
-                },
-                {
-                    "type": "UI-UX",
-                    "title": "Refonte UI",
-                    "description": "Refonte de l'interface de connexion"
-                },
-                {
-                    "type": "UI-UX",
-                    "title": "Refonte UI",
-                    "description": "Refonte de l'interface de register"
-                },
-                {
-                    "type": "UI-UX",
-                    "title": "Refonte UI",
-                    "description": "Refonte de l'interface de user"
-                },
-                {
                     "type": "Fixed",
                     "title": "Fix Bugs",
-                    "description": "Fix de plusieur bugs Mineurs"
+                    "description": "Fix d'un bugs Mineurs"
                 }
             ]
         }

@@ -131,6 +131,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             ajouter_log($_SESSION['user_email'], $action);
         
     }elseif (isset($_POST["submit_rpc_settings"])) {
+        $rpc_id = $_POST["rpc_id"];
         $rpc_details = htmlspecialchars($_POST["rpc_details"], ENT_QUOTES, 'UTF-8');
         $rpc_state = htmlspecialchars($_POST["rpc_state"], ENT_QUOTES, 'UTF-8');
         $rpc_large_image = $_POST["rpc_large_image"];
@@ -486,7 +487,6 @@ function extractYouTubeVideoId($url) {
 require_once './ui/header.php';
 ?>
 <style>
-    /* Styles existants des boutons de scroll */
     .scroll-button {
         position: fixed;
         right: 2rem;
@@ -500,7 +500,6 @@ require_once './ui/header.php';
         bottom: 2rem;
     }
 
-    /* Nouveaux styles pour le positionnement du footer */
     html, body {
         height: 100%;
     }
@@ -513,7 +512,7 @@ require_once './ui/header.php';
     
     .main-content {
         flex: 1;
-        padding-bottom: 4rem; /* Ajustez selon la hauteur de votre footer */
+        padding-bottom: 4rem;
     }
 </style>
 
