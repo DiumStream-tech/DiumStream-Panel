@@ -1,58 +1,28 @@
 {
     "versions": [
         {
-            "version": "0.1.7",
-            "date": "2024-04-04",
+            "version": "0.1.8",
+            "date": "04-04-2025",
             "changes": [
                 {
-                    "type": "Added",
-                    "title": "Nouvelle page système",
-                    "description": "Implémentation complète de la page système avec gestion des versions et historique des modifications"
+                    "type": "Fixed",
+                    "title": "Fixed Bugs",
+                    "description": "Fixed de bugs mineurs"
                 },
                 {
-                    "type": "UI/UX",
-                    "title": "Refonte complète de l'interface utilisateur",
-                    "description": "Migration vers Tailwind CSS 3.0 avec nouveau design dark mode amélioré et animations CSS modernes"
+                    "type": "UI-UX",
+                    "title": "Refonte UI",
+                    "description": "Refonte de l'interface de Logs"
                 },
                 {
-                    "type": "Security",
-                    "title": "Migration 2FA vers robthree/twofactorauth",
-                    "description": "Remplacement complet du système 2FA avec support des QR codes dynamiques et codes de secours"
-                },
-                {
-                    "type": "Feature",
-                    "title": "Gestion avancée des comptes",
-                    "description": "Nouveau système de gestion de compte unifié avec modification d'email, mot de passe et 2FA"
-                },
-                {
-                    "type": "UI/UX",
-                    "title": "Système de notifications animées",
-                    "description": "Implémentation d'un système de notifications contextuelles avec animations et icônes personnalisées"
-                },
-                {
-                    "type": "Infrastructure",
-                    "title": "Intégration du système de logs",
-                    "description": "Journalisation détaillée des actions utilisateurs avec stockage en base de données"
-                },
-                {
-                    "type": "Security",
-                    "title": "Renforcement de la sécurité",
-                    "description": "Implémentation de tokens de session uniques et expiration automatique après inactivité"
-                },
-                {
-                    "type": "UI/UX",
-                    "title": "Footer personnalisable",
-                    "description": "Nouveau système de footer modulaire avec gestion des liens et réseaux sociaux"
-                },
-                {
-                    "type": "Performance",
-                    "title": "Optimisations backend",
-                    "description": "Amélioration des requêtes SQL et gestion des transactions pour les opérations sensibles"
+                    "type": "UI-UX",
+                    "title": "Update UI",
+                    "description": "Modification du footer"
                 },
                 {
                     "type": "Accessibility",
-                    "title": "Amélioration de l'accessibilité",
-                    "description": "Conformité WCAG 2.1 niveau AA avec support des lecteurs d'écran et navigation au clavier"
+                    "title": "Refonte du loader",
+                    "description": "Refonte du Système du loader pour version neoforge forge est fabric"
                 }
             ]
         }

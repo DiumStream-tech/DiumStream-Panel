@@ -1,93 +1,3 @@
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const loaderTypeSelect = document.getElementById('loader-type');
-    const mcVersionInput = document.getElementById('minecraft_version');
-    const loaderBuildVersionSelect = document.getElementById('loader-build-version');
-    const loaderBuildVersionInput = document.getElementById('loader-build-version-input');
-    const loaderForgeVersion = "<?php echo htmlspecialchars($row['loader_forge_version'], ENT_QUOTES); ?>";
-
-    function fetchLoaderBuildVersions(loaderType, mcVersion) {
-        const apiUrl = `function/loader_api.php?loader=${loaderType}&mc_version=${mcVersion}`;
-        
-        fetch(apiUrl)
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    updateLoaderBuildVersions(data.builds, loaderType);
-                } else {
-                    console.error('Erreur API:', data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Erreur lors de la récupération des versions de build:', error);
-            });
-    }
-
-    function updateLoaderBuildVersions(builds, loaderType) {
-        loaderBuildVersionSelect.innerHTML = '';
-
-        builds.forEach(build => {
-            const option = document.createElement('option');
-            option.value = build;
-            option.textContent = build;
-
-            if (loaderType === 'forge' && build === loaderForgeVersion) {
-                option.selected = true;
-            }
-
-            loaderBuildVersionSelect.appendChild(option);
-        });
-
-        if (['forge', 'fabric', 'neoforge'].includes(loaderType)) {
-            loaderBuildVersionSelect.style.display = 'block';
-            loaderBuildVersionInput.style.display = 'none';
-        } else {
-            loaderBuildVersionSelect.style.display = 'none';
-            loaderBuildVersionInput.style.display = 'block';
-        }
-    }
-
-    loaderTypeSelect.addEventListener('change', function() {
-        const loaderType = loaderTypeSelect.value;
-        const mcVersion = mcVersionInput.value;
-
-        if (mcVersion) {
-            fetchLoaderBuildVersions(loaderType, mcVersion);
-        }
-        
-        if (['forge', 'fabric', 'neoforge'].includes(loaderType)) {
-            loaderBuildVersionSelect.style.display = 'block';
-            loaderBuildVersionInput.style.display = 'none';
-        } else {
-            loaderBuildVersionSelect.style.display = 'none';
-            loaderBuildVersionInput.style.display = 'block';
-        }
-    });
-
-    mcVersionInput.addEventListener('change', function() {
-        const loaderType = loaderTypeSelect.value;
-
-        if (loaderType && mcVersionInput.value) {
-            fetchLoaderBuildVersions(loaderType, mcVersionInput.value);
-        }
-    });
-
-    // Initialisation au chargement de la page
-    const initialLoaderType = loaderTypeSelect.value;
-    if (initialLoaderType && mcVersionInput.value) {
-        fetchLoaderBuildVersions(initialLoaderType, mcVersionInput.value);
-        
-        if (['forge', 'fabric', 'neoforge'].includes(initialLoaderType)) {
-            loaderBuildVersionSelect.style.display = 'block';
-            loaderBuildVersionInput.style.display = 'none';
-        } else {
-            loaderBuildVersionSelect.style.display = 'none';
-            loaderBuildVersionInput.style.display = 'block';
-        }
-    }
-});
-</script>
-
 <div class="grid grid-cols-1 gap-6">
     <div id="loader-settings">
         <div class="container mx-auto mt-10 p-6 bg-gray-900 text-white border border-gray-700 rounded-lg shadow-lg">
@@ -126,3 +36,115 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const loaderTypeSelect = document.getElementById('loader-type');
+    const mcVersionInput = document.getElementById('minecraft_version');
+    const loaderBuildVersionSelect = document.getElementById('loader-build-version');
+    const loaderBuildVersionInput = document.getElementById('loader-build-version-input');
+    const loaderForgeVersion = "<?php echo htmlspecialchars($row['loader_forge_version'], ENT_QUOTES); ?>";
+
+    function versionCompare(v1, v2) {
+        const parts1 = v1.split('.').map(Number);
+        const parts2 = v2.split('.').map(Number);
+        
+        for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
+            const p1 = parts1[i] || 0;
+            const p2 = parts2[i] || 0;
+            if (p1 < p2) return -1;
+            if (p1 > p2) return 1;
+        }
+        return 0;
+    }
+
+    function showToast(message) {
+        const toast = document.createElement('div');
+        toast.className = 'fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    function fetchLoaderBuildVersions(loaderType, mcVersion) {
+        const apiUrl = `function/loader_api.php?loader=${loaderType}&mc_version=${mcVersion}`;
+        
+        fetch(apiUrl)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'out_of_range') {
+                    mcVersionInput.value = data.suggested_version;
+                    showToast(`Version ajustée à ${data.suggested_version} pour ${loaderType}`);
+                    fetchLoaderBuildVersions(loaderType, data.suggested_version);
+                    return;
+                }
+                
+                if (data.status === 'success') {
+                    updateLoaderBuildVersions(data.builds, loaderType);
+                } else {
+                    console.error('Erreur API:', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Erreur lors de la récupération des versions de build:', error);
+            });
+    }
+
+    function updateLoaderBuildVersions(builds, loaderType) {
+        loaderBuildVersionSelect.innerHTML = '';
+
+        builds.forEach(build => {
+            const option = document.createElement('option');
+            option.value = build;
+            option.textContent = build;
+
+            if (loaderType === 'forge' && build === loaderForgeVersion) {
+                option.selected = true;
+            }
+
+            loaderBuildVersionSelect.appendChild(option);
+        });
+
+        if (['forge', 'fabric', 'neoforge'].includes(loaderType)) {
+            loaderBuildVersionSelect.style.display = 'block';
+            loaderBuildVersionInput.style.display = 'none';
+        } else {
+            loaderBuildVersionSelect.style.display = 'none';
+            loaderBuildVersionInput.style.display = 'block';
+        }
+    }
+
+    loaderTypeSelect.addEventListener('change', function() {
+        const loaderType = loaderTypeSelect.value;
+        const currentVersion = mcVersionInput.value;
+
+        if (loaderType === 'neoforge' && versionCompare(currentVersion, '1.20.2') < 0) {
+            mcVersionInput.value = '1.21.5';
+        }
+        if (loaderType === 'fabric' && versionCompare(currentVersion, '1.14') < 0) {
+            mcVersionInput.value = '1.21.5';
+        }
+
+        fetchLoaderBuildVersions(loaderType, mcVersionInput.value);
+    });
+
+    mcVersionInput.addEventListener('change', function() {
+        const loaderType = loaderTypeSelect.value;
+        fetchLoaderBuildVersions(loaderType, mcVersionInput.value);
+    });
+
+    const initialLoaderType = loaderTypeSelect.value;
+    const initialMcVersion = mcVersionInput.value;
+    
+    if (initialLoaderType && initialMcVersion) {
+        if (initialLoaderType === 'neoforge' && versionCompare(initialMcVersion, '1.20.2') < 0) {
+            mcVersionInput.value = '1.21.5';
+        }
+        if (initialLoaderType === 'fabric' && versionCompare(initialMcVersion, '1.14') < 0) {
+            mcVersionInput.value = '1.21.5';
+        }
+
+        fetchLoaderBuildVersions(initialLoaderType, mcVersionInput.value);
+    }
+});
+</script>

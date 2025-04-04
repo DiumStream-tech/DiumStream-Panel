@@ -1,6 +1,28 @@
 <?php
 header('Content-Type: application/json');
 
+function checkLoaderCompatibility($loader, $mcVersion) {
+    $loaderRanges = [
+        'forge' => ['min' => '1.1', 'max' => '1.21.5'],
+        'fabric' => ['min' => '1.14', 'max' => '1.21.5'],
+        'neoforge' => ['min' => '1.20.2', 'max' => '1.21.5']
+    ];
+
+    if (isset($loaderRanges[$loader])) {
+        $min = $loaderRanges[$loader]['min'];
+        $max = $loaderRanges[$loader]['max'];
+        
+        if (version_compare($mcVersion, $min, '<') || version_compare($mcVersion, $max, '>')) {
+            return [
+                'status' => 'out_of_range',
+                'message' => 'Version Minecraft incompatible',
+                'suggested_version' => $max
+            ];
+        }
+    }
+    return ['status' => 'ok'];
+}
+
 function getForgeBuilds($mcVersion) {
     $url = "https://files.minecraftforge.net/net/minecraftforge/forge/index_$mcVersion.html";
     $builds = [];
@@ -33,11 +55,16 @@ function getFabricBuilds($mcVersion) {
     $builds = [];
     $json = @file_get_contents($url);
 
-    if ($json !== false) {
-        $data = json_decode($json, true);
-        foreach ($data as $item) {
-            if (isset($item['version'])) {
-                $builds[] = $item['version'];
+    $minFabricVersion = "1.14";
+    $maxFabricVersion = "1.21.5";
+
+    if (version_compare($mcVersion, $minFabricVersion, ">=") && version_compare($mcVersion, $maxFabricVersion, "<=")) {
+        if ($json !== false) {
+            $data = json_decode($json, true);
+            foreach ($data as $item) {
+                if (isset($item['version'])) {
+                    $builds[] = $item['version'];
+                }
             }
         }
     }
@@ -49,22 +76,27 @@ function getNeoForgeBuilds($mcVersion) {
     $url = "https://maven.neoforged.net/releases/net/neoforged/neoforge/maven-metadata.xml";
     $builds = [];
 
-    $xml = @file_get_contents($url);
+    $minNeoForgeVersion = "1.20.2";
+    $maxNeoForgeVersion = "1.21.5";
 
-    if ($xml !== false) {
-        try {
-            $dom = new DOMDocument();
-            $dom->loadXML($xml);
-            $xpath = new DOMXPath($dom);
+    if (version_compare($mcVersion, $minNeoForgeVersion, ">=") && version_compare($mcVersion, $maxNeoForgeVersion, "<=")) {
+        $xml = @file_get_contents($url);
 
-            $versions = $xpath->query('//versions/version');
+        if ($xml !== false) {
+            try {
+                $dom = new DOMDocument();
+                $dom->loadXML($xml);
+                $xpath = new DOMXPath($dom);
 
-            foreach ($versions as $versionNode) {
-                $builds[] = $versionNode->nodeValue;
+                $versions = $xpath->query('//versions/version');
+
+                foreach ($versions as $versionNode) {
+                    $builds[] = $versionNode->nodeValue;
+                }
+            } catch (Exception $e) {
+                error_log("Error parsing NeoForge XML: " . $e->getMessage());
+                return [];
             }
-        } catch (Exception $e) {
-            error_log("Error parsing NeoForge XML: " . $e->getMessage());
-            return [];
         }
     }
 
@@ -75,6 +107,13 @@ if (isset($_GET['loader']) && isset($_GET['mc_version'])) {
     try {
         $loader = $_GET['loader'];
         $mcVersion = $_GET['mc_version'];
+        
+        $compatCheck = checkLoaderCompatibility($loader, $mcVersion);
+        if ($compatCheck['status'] === 'out_of_range') {
+            echo json_encode($compatCheck);
+            exit;
+        }
+
         $builds = [];
 
         switch ($loader) {
