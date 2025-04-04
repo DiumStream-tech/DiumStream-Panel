@@ -133,61 +133,97 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Connexion</title>
+    <title>Connexion - Panel Admin</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .glass-effect {
+            background: rgba(31, 41, 55, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .gradient-text {
+            background: linear-gradient(45deg, #6366f1, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .form-input:focus {
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+    </style>
 </head>
 
-<body class="bg-gray-900 text-white">
-    <div class="container mx-auto mt-20 p-6 bg-gray-900 text-white  rounded-lg ">
-        <div class="flex justify-center">
-            <div class="w-full max-w-md">
-                <div class="bg-gray-800 shadow-md rounded-lg px-8 pt-6 pb-8 mb-4">
-                    <h2 class="text-3xl font-bold mb-6 text-gray-100 border-b border-gray-600 pb-2 text-center">Connexion au Panel</h2>
+<body class="bg-gray-900 text-white min-h-screen flex flex-col">
+    <div class="flex-grow flex items-center">
+        <div class="container mx-auto px-4 py-12">
+            <div class="max-w-md mx-auto glass-effect rounded-xl overflow-hidden">
+                <div class="p-8">
+                    <div class="text-center mb-8">
+                        <i class="bi bi-shield-lock-fill text-6xl gradient-text"></i>
+                        <h1 class="text-3xl font-bold mt-4 gradient-text">Connexion Sécurisée</h1>
+                    </div>
+
                     <?php if (!empty($errors)) : ?>
-                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+                    <div class="bg-red-900/50 border border-red-400 text-red-300 px-4 py-3 rounded-xl mb-6">
                         <?php foreach ($errors as $error) : ?>
-                        <span class="block sm:inline"><?php echo $error; ?></span>
+                        <p class="flex items-center">
+                            <i class="bi bi-exclamation-circle-fill mr-2"></i>
+                            <?= htmlspecialchars($error) ?>
+                        </p>
                         <?php endforeach; ?>
                     </div>
                     <?php endif; ?>
+
                     <?php if (!$show_2fa_form): ?>
-                    <form method="post" action="">
-                        <div class="mb-6">
-                            <label for="email" class="block text-sm font-medium text-gray-400 mb-2">Adresse email</label>
+                    <form method="post" class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-400 mb-2">Adresse email</label>
                             <div class="relative">
-                                <input type="email" name="email" class="form-input mt-1 block w-full rounded-lg border-gray-600 bg-gray-700 text-gray-200 p-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="MonEmail@exemple.com" required>
-                                <i class="bi bi-envelope-fill absolute right-3 top-2.5 text-gray-400"></i>
+                                <input type="email" name="email" required
+                                    class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                    placeholder="exemple@domaine.com">
+                                <i class="bi bi-envelope-fill absolute right-4 top-3.5 text-gray-500"></i>
                             </div>
                         </div>
-                        <div class="mb-6">
-                            <label for="password" class="block text-sm font-medium text-gray-400 mb-2">Mot de passe</label>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-400 mb-2">Mot de passe</label>
                             <div class="relative">
-                                <input id="password" type="password" name="password" class="form-input mt-1 block w-full rounded-lg border-gray-600 bg-gray-700 text-gray-200 p-2 focus:ring-indigo-500 focus:border-indigo-500" required>
-                                <i class="bi bi-lock-fill absolute right-10 top-2.5 text-gray-400"></i>
-                                <i id="togglePassword" class="bi bi-eye-fill absolute right-3 top-2.5 cursor-pointer text-gray-400"></i>
+                                <input id="password" type="password" name="password" required
+                                    class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                    placeholder="••••••••">
+                                <i id="togglePassword" class="bi bi-eye-slash-fill absolute right-4 top-3.5 cursor-pointer text-gray-500 hover:text-indigo-400 transition-colors"></i>
                             </div>
                         </div>
-                        <div class="flex items-center justify-center">
-                            <button type="submit" name="submit" class="bg-indigo-500 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50">
-                                <i class="bi bi-save"></i> Se connecter
-                            </button>
-                        </div>
+
+                        <button type="submit" 
+                            class="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-lg font-semibold transition-all duration-300">
+                            <i class="bi bi-box-arrow-in-right mr-2"></i>
+                            Se connecter
+                        </button>
                     </form>
                     <?php else: ?>
-                    <form method="post" action="">
-                        <div class="mb-6">
-                            <label for="2fa_code" class="block text-sm font-medium text-gray-400 mb-2">Code 2FA</label>
+                    <form method="post" class="space-y-6">
+                        <div class="text-center">
+                            <i class="bi bi-shield-check text-4xl gradient-text"></i>
+                            <h2 class="text-xl font-semibold mt-4 gradient-text">Vérification en 2 étapes</h2>
+                            <p class="text-gray-400 mt-2">Entrez le code de votre application d'authentification</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-400 mb-2">Code 2FA</label>
                             <div class="relative">
-                                <input type="text" id="2fa_code" name="2fa_code" class="form-input mt-1 block w-full rounded-lg border-gray-600 bg-gray-700 text-gray-200 p-2 focus:ring-indigo-500 focus:border-indigo-500" required>
-                                <i class="bi bi-shield-lock-fill absolute right-3 top-2.5 text-gray-400"></i>
+                                <input type="text" name="2fa_code" required
+                                    class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                    placeholder="123456">
+                                <i class="bi bi-key-fill absolute right-4 top-3.5 text-gray-500"></i>
                             </div>
                         </div>
-                        <div class="flex items-center justify-center">
-                            <button type="submit" name="submit_2fa" class="bg-indigo-500 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50">
-                                <i class="bi bi-shield-check"></i> Vérifier
-                            </button>
-                        </div>
+
+                        <button type="submit" 
+                            class="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-lg font-semibold transition-all duration-300">
+                            <i class="bi bi-shield-check mr-2"></i>
+                            Vérifier le code
+                        </button>
                     </form>
                     <?php endif; ?>
                 </div>
@@ -195,14 +231,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 
+    <?php require_once '../ui/footer.php'; ?>
+
     <script>
         const togglePassword = document.querySelector('#togglePassword');
         const password = document.querySelector('#password');
 
-        togglePassword.addEventListener('click', function (e) {
+        togglePassword.addEventListener('click', function () {
             const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
             password.setAttribute('type', type);
             this.classList.toggle('bi-eye-slash-fill');
+            this.classList.toggle('bi-eye-fill');
         });
     </script>
 </body>

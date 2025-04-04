@@ -1,28 +1,38 @@
 {
     "versions": [
         {
-            "version": "0.1.8",
+            "version": "0.1.9",
             "date": "04-04-2025",
             "changes": [
                 {
-                    "type": "Fixed",
-                    "title": "Fixed Bugs",
-                    "description": "Fixed de bugs mineurs"
+                    "type": "UI-UX",
+                    "title": "Refonte UI",
+                    "description": "Refonte de l'interface de File"
                 },
                 {
                     "type": "UI-UX",
                     "title": "Refonte UI",
-                    "description": "Refonte de l'interface de Logs"
+                    "description": "Refonte de l'interface de Setdb"
                 },
                 {
                     "type": "UI-UX",
-                    "title": "Update UI",
-                    "description": "Modification du footer"
+                    "title": "Refonte UI",
+                    "description": "Refonte de l'interface de connexion"
                 },
                 {
-                    "type": "Accessibility",
-                    "title": "Refonte du loader",
-                    "description": "Refonte du Système du loader pour version neoforge forge est fabric"
+                    "type": "UI-UX",
+                    "title": "Refonte UI",
+                    "description": "Refonte de l'interface de register"
+                },
+                {
+                    "type": "UI-UX",
+                    "title": "Refonte UI",
+                    "description": "Refonte de l'interface de user"
+                },
+                {
+                    "type": "Fixed",
+                    "title": "Fix Bugs",
+                    "description": "Fix de plusieur bugs Mineurs"
                 }
             ]
         }

@@ -60,7 +60,9 @@ if ($fullPath === false || strpos($fullPath, $baseDir) !== 0) {
 
 if (isset($_POST['create_folder']) && !empty($_POST['new_folder'])) {
     $newFolder = $fullPath . '/' . $_POST['new_folder'];
-    if (!file_exists($newFolder)) {
+    if (file_exists($newFolder)) {
+        echo "<script>alert('Un dossier avec ce nom existe déjà !');</script>";
+    } else {
         mkdir($newFolder, 0777, true);
         ajouter_log($_SESSION['user_email'], "Création du dossier: " . $_POST['new_folder']);
     }
@@ -68,8 +70,12 @@ if (isset($_POST['create_folder']) && !empty($_POST['new_folder'])) {
 
 if (isset($_POST['upload'])) {
     $uploadFile = $fullPath . '/' . basename($_FILES['upload_file']['name']);
-    if (move_uploaded_file($_FILES['upload_file']['tmp_name'], $uploadFile)) {
-        ajouter_log($_SESSION['user_email'], "Upload du fichier: " . basename($_FILES['upload_file']['name']));
+    if (file_exists($uploadFile)) {
+        echo "<script>alert('Un fichier avec ce nom existe déjà !');</script>";
+    } else {
+        if (move_uploaded_file($_FILES['upload_file']['tmp_name'], $uploadFile)) {
+            ajouter_log($_SESSION['user_email'], "Upload du fichier: " . basename($_FILES['upload_file']['name']));
+        }
     }
 }
 
@@ -146,11 +152,16 @@ function createZip($files, $destination) {
     if ($zip->open($destination, ZipArchive::CREATE) !== TRUE) {
         return false;
     }
+    
     foreach ($files as $file) {
-        $zip->addFile($file, basename($file));
+        if (file_exists($file)) {
+            $relativePath = substr($file, strlen(dirname($file)) + 1);
+            $zip->addFile($file, $relativePath);
+        }
     }
+    
     $zip->close();
-    return true;
+    return file_exists($destination);
 }
 
 if (isset($_POST['create_zip']) && !empty($_POST['selected_files'])) {
@@ -170,134 +181,205 @@ if (isset($_POST['create_zip']) && !empty($_POST['selected_files'])) {
 require_once 'ui/header4.php';
 ?>
 
-<div class="container mx-auto mt-10 p-6 bg-gray-900 text-white border border-gray-700 rounded-lg shadow-lg">
-    <div class="grid grid-cols-1 gap-6">
-        <h2 class="text-3xl font-bold mb-6 text-gray-100 border-b border-gray-600 pb-2">Explorateur de Fichiers</h2>
-        
-        <?php if (!hasPermission($utilisateur, 'file_access')): ?>
-            <div id="overlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-                <div class="bg-gray-800 p-8 rounded-lg text-center">
-                    <h3 class="text-xl font-bold mb-4">Accès refusé</h3>
-                    <p class="mb-6">Vous n'avez pas la permission d'accéder à l'explorateur de fichiers.</p>
-                    <a href="settings" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                        Retour au panel
-                    </a>
+<div class="min-h-screen flex flex-col bg-gray-900">
+    <div class="flex-grow">
+        <div class="container mx-auto px-4 py-8">
+            <!-- Header amélioré -->
+            <div class="flex justify-between items-center mb-8 p-6 bg-gray-800 rounded-xl shadow-lg">
+                <div>
+                    <h2 class="text-3xl font-bold text-white">📁 Explorateur de Fichiers</h2>
+                    <p class="text-sm text-gray-400 mt-2">Gestion des fichiers et dossiers</p>
                 </div>
             </div>
-        <?php else: ?>
-            <div class="flex mb-4">
-                <form action="" method="post" class="mr-4">
-                    <input type="text" name="new_folder" placeholder="Nom du dossier" class="form-input mt-1 block w-full rounded-lg border-gray-600 bg-gray-700 text-gray-200 p-2 focus:ring-indigo-500 focus:border-indigo-500">
-                    <button type="submit" name="create_folder" class="mt-2 px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75">
-                        <i class="bi bi-folder-plus"></i> Créer Dossier
-                    </button>
-                </form>
-                <form action="" method="post" enctype="multipart/form-data" class="mr-4">
-                    <input type="file" name="upload_file" class="form-input mt-1 block w-full rounded-lg border-gray-600 bg-gray-700 text-gray-200 p-2 focus:ring-indigo-500 focus:border-indigo-500">
-                    <button type="submit" name="upload" class="mt-2 px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75">
-                        <i class="bi bi-upload"></i> Uploader
-                    </button>
-                </form>
-                <form action="" method="post" enctype="multipart/form-data">
-                    <input type="file" name="upload_zip" class="form-input mt-1 block w-full rounded-lg border-gray-600 bg-gray-700 text-gray-200 p-2 focus:ring-indigo-500 focus:border-indigo-500">
-                    <button type="submit" name="extract_zip" class="mt-2 px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75">
-                        <i class="bi bi-file-earmark-zip"></i> Extraire Zip
-                    </button>
-                </form>
+
+            <!-- Outils de gestion -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <!-- Carte de création de dossier -->
+                <div class="bg-gray-800 p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
+                    <h3 class="text-xl font-semibold text-white mb-4">➕ Nouveau dossier</h3>
+                    <form method="POST" class="space-y-4">
+                        <input type="text" name="new_folder" placeholder="Nom du dossier" class="w-full px-4 py-2 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-indigo-500">
+                        <button type="submit" name="create_folder" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg">
+                            Créer
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Carte d'upload -->
+                <div class="bg-gray-800 p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
+                    <h3 class="text-xl font-semibold text-white mb-4">⬆️ Upload de fichier</h3>
+                    <form method="POST" enctype="multipart/form-data" class="space-y-4">
+                        <input type="file" name="upload_file" class="w-full text-white">
+                        <button type="submit" name="upload" class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">
+                            Envoyer
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Carte d'extraction ZIP -->
+                <div class="bg-gray-800 p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
+                    <h3 class="text-xl font-semibold text-white mb-4">📦 Extraire ZIP</h3>
+                    <form method="POST" enctype="multipart/formdata" class="space-y-4">
+                        <input type="file" name="upload_zip" class="w-full text-white">
+                        <button type="submit" name="extract_zip" class="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg">
+                            Extraire
+                        </button>
+                    </form>
+                </div>
             </div>
-            
-            <form method="post" id="fileForm">
-                <ul>
-                    <li class="mb-2 flex items-center">
-                        <input type="checkbox" onclick="toggleSelectAll(this)" class="form-checkbox h-5 w-5 text-indigo-600 rounded focus:ring-indigo-500 mr-2">
-                        <label for="select_all" class="text-gray-200">Tout sélectionner</label>
-                    </li>
-                    <?php
-                    function listFiles($dir) {
-                        $files = scandir($dir);
-                        foreach ($files as $file) {
-                            if ($file !== '.' && $file !== '..' && $file !== 'index.php') { 
-                                echo '<li class="mb-2 flex items-center">';
-                                echo '<input type="checkbox" name="selected_files[]" value="' . htmlspecialchars($file) . '" class="form-checkbox h-5 w-5 text-indigo-600 rounded focus:ring-indigo-500 mr-2">';
-                                if (is_dir($dir . '/' . $file)) {
-                                    echo '<i class="bi bi-folder-fill text-yellow-500 mr-2"></i>';
-                                    echo '<a href="?dir=' . urlencode(trim($GLOBALS['currentDir'] . '/' . $file, '/')) . '" class="text-indigo-400 hover:underline">' . htmlspecialchars($file) . '</a>';
-                                } else {
-                                    echo '<i class="bi bi-file-earmark-fill text-gray-500 mr-2"></i>';
-                                    echo htmlspecialchars($file);
-                                    if (is_file($dir . '/' . $file)) {
-                                        echo '<a href="?download=' . urlencode(trim($GLOBALS['currentDir'] . '/' . $file, '/')) . '" class="text-green-500 hover:text-green-700 ml-4"><i class="bi bi-download"></i></a>';
-                                    }
+
+            <!-- Liste de fichiers améliorée -->
+            <form method="POST" id="mainForm">
+                <div class="bg-gray-800 rounded-xl shadow-lg overflow-hidden">
+                    <!-- Barre d'outils -->
+                    <div class="px-6 py-4 border-b border-gray-700 flex justify-between items-center">
+                        <div class="flex items-center space-x-4">
+                            <button type="button" onclick="selectAllFiles()" class="text-indigo-500 hover:text-indigo-600 transition-colors">
+                                <i></i> Tout sélectionner
+                            </button>
+
+                            <div id="actionButtons" style="display: none;" class="flex items-center space-x-4">
+                                <button type="submit" name="delete_selected" class="text-red-500 hover:text-red-600 transition-colors">
+                                    <i class="bi bi-trash text-2xl"></i> Supprimer
+                                </button>
+                                <button type="submit" name="create_zip" class="text-green-500 hover:text-green-600 transition-colors ml-4">
+                                <i class="bi bi-file-earmark-zip text-2xl"></i> ZIP
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <nav class="flex" aria-label="Breadcrumb">
+                            <ol class="flex items-center space-x-2">
+                                <li>
+                                    <a href="?dir=" class="text-gray-400 hover:text-white">Accueil</a>
+                                </li>
+                                <?php
+                                $cumulativePath = '';
+                                foreach (explode('/', $currentDir) as $part):
+                                    if (!empty($part)):
+                                        $cumulativePath .= '/' . $part;
+                                ?>
+                                <li class="flex items-center">
+                                    <span class="text-gray-500 mx-2">/</span>
+                                    <a href="?dir=<?= urlencode(trim($cumulativePath, '/')) ?>" class="text-gray-400 hover:text-white">
+                                        <?= htmlspecialchars($part) ?>
+                                    </a>
+                                </li>
+                                <?php endif; endforeach; ?>
+                            </ol>
+                        </nav>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full">
+                            <tbody class="divide-y divide-gray-700">
+                                <?php if ($currentDir): ?>
+                                <tr class="hover:bg-gray-750 transition-colors">
+                                    <td class="px-6 py-4">
+                                        <a href="?dir=<?= urlencode(dirname($currentDir)) ?>" class="text-indigo-400 hover:text-indigo-300 flex items-center">
+                                            <i class="bi bi-arrow-left-circle text-2xl mr-3"></i>
+                                            <span>Dossier parent</span>
+                                        </a>
+                                    </td>
+                                    <td class="px-6 py-4 text-right text-gray-400">--</td>
+                                    <td class="px-6 py-4 text-right text-gray-400">--</td>
+                                </tr>
+                                <?php endif; ?>
+
+                                <?php
+                                function formatSize($bytes) {
+                                    if ($bytes >= 1073741824) return number_format($bytes / 1073741824, 2) . ' GB';
+                                    if ($bytes >= 1048576) return number_format($bytes / 1048576, 2) . ' MB';
+                                    if ($bytes >= 1024) return number_format($bytes / 1024, 2) . ' KB';
+                                    return $bytes . ' B';
                                 }
-                                echo '<a href="?delete=' . urlencode(trim($GLOBALS['currentDir'] . '/' . $file, '/')) . '" class="text-red-500 hover:text-red-700 ml-4"><i class="bi bi-trash"></i></a>';
-                                echo '</li>';
-                            }
-                        }
-                    }
 
-                    if ($currentDir) {
-                        $parentDir = dirname($currentDir);
-                        echo '<li class="mb-2">';
-                        echo '<i class="bi bi-arrow-left-short text-gray-500 mr-2"></i>';
-                        echo '<a href="?dir=' . urlencode($parentDir) . '" class="text-indigo-400 hover:underline">.. (Retour)</a>';
-                        echo '</li>';
-                    }
-
-                    listFiles($fullPath);
-                    ?>
-                </ul>
-                <div id="actionButtons" class="mt-4" style="display: none;">
-                    <button type="submit" name="delete_selected" id="deleteButton" class="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75">
-                        <i class="bi bi-trash"></i> Supprimer Sélectionnés
-                    </button>
-                    <button type="submit" name="create_zip" id="zipButton" class="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-75 ml-2">
-                        <i class="bi bi-file-earmark-zip"></i> Créer ZIP
-                    </button>
+                                $items = scandir($fullPath);
+                                foreach ($items as $item):
+                                    if ($item !== '.' && $item !== '..' && $item !== 'index.php'):
+                                        $itemPath = $fullPath . '/' . $item;
+                                        $isDir = is_dir($itemPath);
+                                ?>
+                                <tr class="hover:bg-gray-750 transition-colors">
+                                    <td class="px-6 py-4">
+                                        <label class="inline-flex items-center">
+                                            <input type="checkbox" name="selected_files[]" value="<?= htmlspecialchars($item) ?>" 
+                                                   class="form-checkbox h-5 w-5 text-indigo-600 rounded transition-all duration-200 ease-in-out"
+                                                   onchange="updateActionButtons()">
+                                        </label>
+                                    </td>
+                                    
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center group">
+                                            <i class="bi <?= $isDir ? 'bi-folder-fill text-yellow-400' : 'bi-file-earmark-text text-gray-400' ?> text-2xl mr-3"></i>
+                                            <?php if ($isDir): ?>
+                                                <a href="?dir=<?= urlencode(trim($currentDir . '/' . $item, '/')) ?>" class="text-white hover:text-indigo-300 font-medium">
+                                                    <?= htmlspecialchars($item) ?>
+                                                </a>
+                                            <?php else: ?>
+                                                <div class="relative">
+                                                    <span class="text-white font-medium group-hover:text-indigo-300 transition-colors">
+                                                        <?= htmlspecialchars($item) ?>
+                                                    </span>
+                                                    <span class="absolute -bottom-1 left-0 w-full h-0.5 bg-indigo-400 scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+                                    </td>
+                                    
+                                    <td class="px-6 py-4 text-right text-gray-400">
+                                        <?= $isDir ? 'Dossier' : formatSize(filesize($itemPath)) ?>
+                                    </td>
+                                    
+                                    <td class="px-6 py-4 text-right space-x-4">
+                                        <?php if (!$isDir): ?>
+                                        <a href="?download=<?= urlencode(trim($currentDir . '/' . $item, '/')) ?>" class="text-green-500 hover:text-green-400" title="Télécharger">
+                                            <i class="bi bi-download text-xl"></i>
+                                        </a>
+                                        <?php endif; ?>
+                                        
+                                        <a href="?delete=<?= urlencode(trim($currentDir . '/' . $item, '/')) ?>" class="text-red-500 hover:text-red-400" title="Supprimer" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet élément?')">
+                                            <i class="bi bi-trash text-xl"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                <?php endif; endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </form>
-        <?php endif; ?>
+        </div>
     </div>
+
+    <?php require_once './ui/footer.php'; ?>
 </div>
 
 <?php if (hasPermission($utilisateur, 'file_access')): ?>
 <script>
-function toggleSelectAll(source) {
-    var checkboxes = document.getElementsByName('selected_files[]');
-    for (var i = 0; i < checkboxes.length; i++) {
-        checkboxes[i].checked = source.checked;
-    }
+function selectAllFiles() {
+    const checkboxes = document.querySelectorAll('input[name="selected_files[]"]');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = true;
+    });
     updateActionButtons();
 }
 
 function updateActionButtons() {
-    var checkboxes = document.getElementsByName('selected_files[]');
-    var checkedCount = 0;
-    for (var i = 0; i < checkboxes.length; i++) {
-        if (checkboxes[i].checked) {
-            checkedCount++;
-        }
-    }
-
+    var checkboxes = document.querySelectorAll('input[name="selected_files[]"]:checked');
     var actionButtons = document.getElementById('actionButtons');
-    var deleteButton = document.getElementById('deleteButton');
-    var zipButton = document.getElementById('zipButton');
-
-    if (checkedCount > 0) {
-        actionButtons.style.display = 'block';
-        deleteButton.style.display = 'inline-block';
-        zipButton.style.display = 'inline-block';
+    
+    if (checkboxes.length > 0) {
+        actionButtons.style.display = 'flex';
     } else {
         actionButtons.style.display = 'none';
     }
 }
 
-var checkboxes = document.getElementsByName('selected_files[]');
-for (var i = 0; i < checkboxes.length; i++) {
-    checkboxes[i].addEventListener('change', updateActionButtons);
-}
-
-updateActionButtons();
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('input[name="selected_files[]"]').forEach(checkbox => {
+        checkbox.addEventListener('change', updateActionButtons);
+    });
+});
 </script>
 <?php endif; ?>
-
-<?php require_once './ui/footer.php'; ?>

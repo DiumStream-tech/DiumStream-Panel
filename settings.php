@@ -486,165 +486,192 @@ function extractYouTubeVideoId($url) {
 require_once './ui/header.php';
 ?>
 <style>
- .scroll-button {
-      position: fixed;
-      right: 2rem;
-      z-index: 10;
-      display: none;
+    /* Styles existants des boutons de scroll */
+    .scroll-button {
+        position: fixed;
+        right: 2rem;
+        z-index: 10;
+        display: none;
     }
- .scroll-to-top {
-      bottom: 5rem;
+    .scroll-to-top {
+        bottom: 5rem;
     }
- .scroll-to-bottom {
-      bottom: 2rem;
+    .scroll-to-bottom {
+        bottom: 2rem;
+    }
+
+    /* Nouveaux styles pour le positionnement du footer */
+    html, body {
+        height: 100%;
+    }
+    
+    body {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
+    
+    .main-content {
+        flex: 1;
+        padding-bottom: 4rem; /* Ajustez selon la hauteur de votre footer */
     }
 </style>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<?php if ($isNewVersionAvailable): ?>
+
+<div class="main-content">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <?php if ($isNewVersionAvailable): ?>
     <script>
-function checkForUpdate() {
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', 'update/update.php', true);
-    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    xhr.onload = function () {
-        if (xhr.status === 200) {
-            try {
-                var response = JSON.parse(xhr.responseText);
-                if (response.success && response.new_version_available) {
-                    Swal.fire({
-                        title: 'Mise à jour disponible',
-                        text: `Une nouvelle version (${response.latest_version}) est disponible. Voulez-vous mettre à jour maintenant?`,
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonText: 'Oui',
-                        cancelButtonText: 'Non'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            performUpdate();
-                        }
-                    });
-                } else if (response.success && !response.new_version_available) {
-                    console.log(`Vous êtes déjà à jour avec la version ${response.current_version}.`);
-                } else {
-                    Swal.fire({
-                        title: 'Erreur',
-                        text: response.message || 'Une erreur est survenue lors de la vérification de la mise à jour.',
-                        icon: 'error',
-                        confirmButtonText: 'Fermer'
-                    });
+    function checkForUpdate() {
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', 'update/update.php', true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.onload = function () {
+            if (xhr.status === 200) {
+                try {
+                    var response = JSON.parse(xhr.responseText);
+                    if (response.success && response.new_version_available) {
+                        Swal.fire({
+                            title: 'Mise à jour disponible',
+                            text: `Une nouvelle version (${response.latest_version}) est disponible. Voulez-vous mettre à jour maintenant?`,
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Oui',
+                            cancelButtonText: 'Non'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                performUpdate();
+                            }
+                        });
+                    } else if (response.success && !response.new_version_available) {
+                        console.log(`Vous êtes déjà à jour avec la version ${response.current_version}.`);
+                    } else {
+                        Swal.fire({
+                            title: 'Erreur',
+                            text: response.message || 'Une erreur est survenue lors de la vérification de la mise à jour.',
+                            icon: 'error',
+                            confirmButtonText: 'Fermer'
+                        });
+                    }
+                } catch (error) {
+                    console.error("Erreur lors de l'analyse de la réponse JSON : ", error);
                 }
-            } catch (error) {
-                console.error("Erreur lors de l'analyse de la réponse JSON : ", error);
+            } else {
+                console.error(`Erreur réseau : Code HTTP ${xhr.status}`);
             }
-        } else {
-            console.error(`Erreur réseau : Code HTTP ${xhr.status}`);
-        }
-    };
-    xhr.onerror = function () {
-        console.error("Erreur réseau lors de la requête.");
-    };
-    xhr.send('check_update=1');
-}
+        };
+        xhr.onerror = function () {
+            console.error("Erreur réseau lors de la requête.");
+        };
+        xhr.send('check_update=1');
+    }
 
-function performUpdate() {
-    Swal.fire({
-        title: 'Mise à jour en cours',
-        text: "Veuillez patienter pendant que nous mettons à jour le système.",
-        icon: 'info',
-        allowOutsideClick: false,
-        showConfirmButton: false,
-        didOpen: () => Swal.showLoading()
-    });
+    function performUpdate() {
+        Swal.fire({
+            title: 'Mise à jour en cours',
+            text: "Veuillez patienter pendant que nous mettons à jour le système.",
+            icon: 'info',
+            allowOutsideClick: false,
+            showConfirmButton: false,
+            didOpen: () => Swal.showLoading()
+        });
 
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', 'update/update.php', true);
-    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    xhr.onload = function () {
-        Swal.close();
-        if (xhr.status === 200) {
-            try {
-                var response = JSON.parse(xhr.responseText);
-                if (response.success) {
-                    Swal.fire({
-                        title: 'Mise à jour réussie',
-                        text: response.message || "Le système a été mis à jour avec succès.",
-                        icon: 'success',
-                        confirmButtonText: 'Fermer'
-                    });
-                } else {
-                    Swal.fire({
-                        title: 'Erreur',
-                        text: response.message || "Une erreur est survenue pendant la mise à jour.",
-                        icon: 'error',
-                        confirmButtonText: 'Fermer'
-                    });
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', 'update/update.php', true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.onload = function () {
+            Swal.close();
+            if (xhr.status === 200) {
+                try {
+                    var response = JSON.parse(xhr.responseText);
+                    if (response.success) {
+                        Swal.fire({
+                            title: 'Mise à jour réussie',
+                            text: response.message || "Le système a été mis à jour avec succès.",
+                            icon: 'success',
+                            confirmButtonText: 'Fermer'
+                        });
+                    } else {
+                        Swal.fire({
+                            title: 'Erreur',
+                            text: response.message || "Une erreur est survenue pendant la mise à jour.",
+                            icon: 'error',
+                            confirmButtonText: 'Fermer'
+                        });
+                    }
+                } catch (error) {
+                    console.error("Erreur lors de l'analyse de la réponse JSON : ", error);
                 }
-            } catch (error) {
-                console.error("Erreur lors de l'analyse de la réponse JSON : ", error);
+            } else {
+                console.error(`Erreur réseau : Code HTTP ${xhr.status}`);
             }
-        } else {
-            console.error(`Erreur réseau : Code HTTP ${xhr.status}`);
-        }
-    };
-    xhr.onerror = function () {
-        console.error("Erreur réseau lors de la requête.");
-    };
-    xhr.send('update_button=1');
-}
+        };
+        xhr.onerror = function () {
+            console.error("Erreur réseau lors de la requête.");
+        };
+        xhr.send('update_button=1');
+    }
 
-checkForUpdate();
-</script>
-<?php endif; ?>
-   <a href="#" class="scroll-button scroll-to-top bg-gray-900 hover:bg-blue-600 text-white py-2 px-4 rounded-full shadow-lg transition duration-300 ease-in-out">
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 inline-block align-middle" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
-    </svg>
-   </a>
-   <a href="#" class="scroll-button scroll-to-bottom bg-gray-900 hover:bg-blue-600 text-white py-2 px-4 rounded-full shadow-lg transition duration-300 ease-in-out">
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 inline-block align-middle" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
-    </svg>
-   </a>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    var scrollToTopBtn = document.querySelector('.scroll-to-top');
-    var scrollToBottomBtn = document.querySelector('.scroll-to-bottom');
+    checkForUpdate();
+    </script>
+    <?php endif; ?>
 
-    window.addEventListener('scroll', function() {
-        var scrollTotal = document.documentElement.scrollHeight - window.innerHeight;
-        if ((window.pageYOffset > 100) && (window.pageYOffset < scrollTotal - 100)) {
-            scrollToTopBtn.style.display = 'block';
-            scrollToBottomBtn.style.display = 'block';
-        } else if (window.pageYOffset <= 100) {
-            scrollToTopBtn.style.display = 'none';
-            scrollToBottomBtn.style.display = 'block';
-        } else {
-            scrollToTopBtn.style.display = 'block';
-            scrollToBottomBtn.style.display = 'none';
-        }
+    <a href="#" class="scroll-button scroll-to-top bg-gray-900 hover:bg-blue-600 text-white py-2 px-4 rounded-full shadow-lg transition duration-300 ease-in-out">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 inline-block align-middle" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
+        </svg>
+    </a>
+    <a href="#" class="scroll-button scroll-to-bottom bg-gray-900 hover:bg-blue-600 text-white py-2 px-4 rounded-full shadow-lg transition duration-300 ease-in-out">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 inline-block align-middle" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+        </svg>
+    </a>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var scrollToTopBtn = document.querySelector('.scroll-to-top');
+        var scrollToBottomBtn = document.querySelector('.scroll-to-bottom');
+
+        window.addEventListener('scroll', function() {
+            var scrollTotal = document.documentElement.scrollHeight - window.innerHeight;
+            if ((window.pageYOffset > 100) && (window.pageYOffset < scrollTotal - 100)) {
+                scrollToTopBtn.style.display = 'block';
+                scrollToBottomBtn.style.display = 'block';
+            } else if (window.pageYOffset <= 100) {
+                scrollToTopBtn.style.display = 'none';
+                scrollToBottomBtn.style.display = 'block';
+            } else {
+                scrollToTopBtn.style.display = 'block';
+                scrollToBottomBtn.style.display = 'none';
+            }
+        });
+
+        scrollToTopBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        });
+
+        scrollToBottomBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.scrollTo({top: document.documentElement.scrollHeight, behavior: 'smooth'});
+        });
     });
+    </script>
 
-    scrollToTopBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        window.scrollTo({top: 0, behavior: 'smooth'});
-    });
+    <?php 
+    require_once './function/main.php';
+    require_once './function/serveur.php';
+    require_once './function/splash.php';
+    require_once './function/loader.php';
+    require_once './function/rpc.php';
+    require_once './function/maintenance.php';
+    require_once './function/whitelist.php';
+    require_once './function/roles.php';
+    require_once './function/ignore.php';
+    require_once './function/mods.php';
+    require_once './function/alert.php';
+    require_once './function/video.php';
+    ?>
+</div>
 
-    scrollToBottomBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        window.scrollTo({top: document.documentElement.scrollHeight, behavior: 'smooth'});
-    });
-});
-</script>
-<?php require_once './function/main.php';?>
-<?php require_once './function/serveur.php';?>
-<?php require_once './function/splash.php';?>
-<?php require_once './function/loader.php';?>
-<?php require_once './function/rpc.php';?>
-<?php require_once './function/maintenance.php';?>
-<?php require_once './function/whitelist.php';?>
-<?php require_once './function/roles.php';?>
-<?php require_once './function/ignore.php';?>
-<?php require_once './function/mods.php';?>
-<?php require_once './function/alert.php';?>
-<?php require_once './function/video.php';?>
-<?php require_once './ui/footer.php';
+<?php require_once './ui/footer.php'; ?>

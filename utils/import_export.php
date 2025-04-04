@@ -218,7 +218,6 @@ include '../ui/header5.php';
                     </form>
                 </div>
 
-                <!-- Carte d'exportation -->
                 <div class="export-card hover-scale rounded-2xl shadow-xl p-6">
                     <div class="flex items-center mb-6">
                         <div class="bg-green-500/10 p-3 rounded-full">
@@ -277,7 +276,6 @@ include '../ui/header5.php';
         </div>
     </div>
 
-    <!-- Overlay d'erreur -->
     <div id="errorOverlay" class="fixed inset-0 bg-black/70 hidden items-center justify-center p-4 z-50">
         <div class="bg-gray-800 rounded-2xl shadow-xl max-w-md w-full p-6 text-center">
             <div class="bg-red-500/10 p-4 rounded-full inline-block">

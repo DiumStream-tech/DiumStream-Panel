@@ -108,10 +108,10 @@
                         </button>
                         <div id="settings-panel-dropdown" class="hidden absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="menu-button-settings" tabindex="-1">
                             <div class="py-1" role="none">
-                                <a href="../utils/import_export.php" class="block px-4 py-2 text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1" id="menu-item-3">
+                                <a href="../utils/import_export" class="block px-4 py-2 text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1" id="menu-item-3">
                                     <i class="bi bi-arrow-down-up mr-2"></i> Importer/Exporter
                                 </a>
-                                <a href="../account/new/register" class="block px-4 py-2 text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1" id="menu-item-4">
+                                <a href="../account/new/user" class="block px-4 py-2 text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1" id="menu-item-4">
                                     <i class="bi bi-person-plus mr-2"></i> Ajouter un utilisateur
                                 </a>
                                 <a href="../logs/view" class="block px-4 py-2 text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1" id="menu-item-5">

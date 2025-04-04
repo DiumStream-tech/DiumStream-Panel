@@ -69,7 +69,6 @@ if (isset($_SESSION['user_token'])) {
                 </div>
             <?php else: ?>
                 <div class="space-y-8">
-                    <!-- En-tête -->
                     <div class="flex flex-col md:flex-row justify-between items-start gap-4">
                         <div>
                             <h2 class="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
