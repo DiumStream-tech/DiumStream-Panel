@@ -1,6 +1,6 @@
 # DiumStream-Panel
 
-DiumStream-Panel est un fork du [CentralCorp-Panel](https://github.com/Riptiaz/CentralCorp-Panel) développé par Riptiaz. Ce panel a été modifié et amélioré pour répondre aux besoins spécifiques du projet DiumStream.
+DiumStream-Panel est un fork du [CentralCorp-Panel](https://github.com/Riptiaz/CentralCorp-Panel) développé par Riptiaz. Ce panel a été modifié et amélioré.
 
 ## À propos du projet
 
