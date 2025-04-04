@@ -8,7 +8,7 @@ if (!file_exists($configFilePath)) {
 require_once '../connexion_bdd.php';
 require_once '../vendor/autoload.php';
 
-use Sonata\GoogleAuthenticator\GoogleAuthenticator;
+use RobThree\Auth\TwoFactorAuth;
 
 function ajouter_log($user, $action) {
     global $pdo;
@@ -103,8 +103,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute(['id' => $_SESSION['temp_user_id']]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        $g = new GoogleAuthenticator();
-        if ($g->checkCode($user['two_factor_secret'], $code)) {
+        $tfa = new TwoFactorAuth('Panel Launcher');
+        if ($tfa->verifyCode($user['two_factor_secret'], $code)) {
             $token = generateToken();
             $_SESSION['user_email'] = $user['email'];
             $_SESSION['user_token'] = $token;
@@ -194,5 +194,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </div>
     </div>
+
+    <script>
+        const togglePassword = document.querySelector('#togglePassword');
+        const password = document.querySelector('#password');
+
+        togglePassword.addEventListener('click', function (e) {
+            const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+            password.setAttribute('type', type);
+            this.classList.toggle('bi-eye-slash-fill');
+        });
+    </script>
 </body>
 </html>

@@ -432,11 +432,11 @@ $optionalModsStmt = $pdo->query($sql);
 $optionalMods = $optionalModsStmt->fetchAll(PDO::FETCH_ASSOC);
 
 function getCurrentVersion() {
-    return trim(file_get_contents('update/version.json'));
+    return trim(file_get_contents('update/json/version.json'));
 }
 
 function getUpdateInfo() {
-    $updateJsonPath = 'update/update.json';
+    $updateJsonPath = 'update/json/update.json';
     if (!file_exists($updateJsonPath)) {
         throw new Exception('Fichier update.json introuvable.');
     }

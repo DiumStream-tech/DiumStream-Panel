@@ -142,131 +142,172 @@ include '../ui/header5.php';
     <title>Gestion de la Base de Données</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
+    <style>
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.65);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .hover-scale {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .hover-scale:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        .file-upload-card {
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
+        }
+        .export-card {
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
+        }
+        .permission-denied-card {
+            background: linear-gradient(145deg, rgba(55, 65, 81, 0.9), rgba(31, 41, 55, 0.9));
+        }
+    </style>
 </head>
 <body class="bg-gray-950 text-gray-200">
     <?php require_once '../ui/header5.php'; ?>
 
-    <div class="container mx-auto mt-8 px-4">
-        <h1 class="text-4xl font-bold mb-8 text-center text-gray-100">Importer/Exporter</h1>
+    <div class="container mx-auto py-12 px-4">
+        <div class="max-w-7xl mx-auto">
+            <h1 class="text-4xl font-bold mb-8 text-center text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
+                Gestion des Données
+            </h1>
 
-        <?php if ($message): ?>
-            <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded-md shadow-md" role="alert">
-                <p class="font-bold">Message</p>
-                <p><?php echo $message; ?></p>
-            </div>
-        <?php endif; ?>
+            <?php if ($message): ?>
+                <div class="glass-panel p-6 mb-8 rounded-lg border border-<?php echo strpos($message, 'Erreur') !== false ? 'red-500/30' : 'green-500/30'; ?>">
+                    <div class="flex items-center space-x-4">
+                        <div class="flex-shrink-0">
+                            <i class="fas <?php echo strpos($message, 'Erreur') !== false ? 'fa-exclamation-triangle text-red-400' : 'fa-check-circle text-green-400'; ?> text-2xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-lg font-semibold"><?php echo $message; ?></p>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
 
-        <?php if ($hasPermission): ?>
-        <div class="bg-gray-900 rounded-lg shadow-xl p-8 max-w-4xl mx-auto">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                <div class="bg-gray-800 p-6 rounded-lg shadow-md">
-                    <h2 class="text-2xl font-semibold mb-6 flex items-center text-gray-100">
-                        <i class="fas fa-file-import mr-3 text-blue-400"></i>Importer
-                    </h2>
-                    <form method="post" enctype="multipart/form-data">
-                        <div class="mb-6">
-                            <label for="json_file" class="block text-sm font-medium text-gray-300 mb-2">Sélectionner un fichier JSON</label>
-                            <div class="flex items-center">
-                                <input type="file" name="json_file" id="json_file" accept=".json" class="hidden">
-                                <label for="json_file" class="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-l transition duration-300 ease-in-out flex-grow text-center">
-                                    <i class="fas fa-file-upload mr-2"></i>Choisir un fichier
-                                </label>
-                                <span id="file-name" class="bg-gray-700 text-gray-300 py-3 px-4 rounded-r w-1/2 truncate">Aucun fichier choisi</span>
+            <?php if ($hasPermission): ?>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Carte d'importation -->
+                <div class="file-upload-card hover-scale rounded-2xl shadow-xl p-6">
+                    <div class="flex items-center mb-6">
+                        <div class="bg-blue-500/10 p-3 rounded-full">
+                            <i class="fas fa-file-import text-blue-400 text-2xl"></i>
+                        </div>
+                        <h2 class="text-2xl font-semibold ml-4">Importer des Données</h2>
+                    </div>
+                    
+                    <form method="post" enctype="multipart/form-data" class="space-y-6">
+                        <div class="relative border-2 border-dashed border-gray-700 rounded-lg p-8 text-center transition-all hover:border-blue-400">
+                            <input type="file" name="json_file" id="json_file" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                            <div class="space-y-2">
+                                <i class="fas fa-cloud-upload-alt text-3xl text-blue-400"></i>
+                                <p class="text-gray-300">Glissez-déposez ou <span class="text-blue-400">parcourir</span></p>
+                                <p class="text-sm text-gray-400">Format JSON uniquement</p>
                             </div>
                         </div>
-                        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded transition duration-300 ease-in-out flex items-center justify-center">
-                            <i class="fas fa-upload mr-2"></i>Importer
+                        <div id="file-selected" class="hidden text-center text-sm text-gray-300">
+                            <i class="fas fa-file-alt mr-2"></i>
+                            <span id="file-name"></span>
+                        </div>
+                        <button type="submit" class="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white font-bold py-3 rounded-lg hover:opacity-90 transition-opacity">
+                            <i class="fas fa-upload mr-2"></i>Importer les Données
                         </button>
                     </form>
                 </div>
 
-                <div class="bg-gray-800 p-6 rounded-lg shadow-md">
-                    <h2 class="text-2xl font-semibold mb-6 flex items-center text-gray-100">
-                        <i class="fas fa-file-export mr-3 text-green-400"></i>Exporter
-                    </h2>
-                    <form method="get" action="" id="exportForm">
-                        <input type="hidden" name="action" value="export">
-                        <div class="space-y-3 mb-6 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
-                            <h3 class="text-lg font-semibold mb-2 text-gray-200">Tables à exporter</h3>
-                            <?php
-                            $tables = [
-                                'logs',
-                                'ignored_folders',
-                                'mods',
-                                'options',
-                                'roles',
-                                'users',
-                                'whitelist',
-                                'whitelist_roles'
-                            ];
-                            foreach ($tables as $table) {
-                                echo "<label class='flex items-center text-gray-300 hover:bg-gray-700 p-2 rounded transition duration-200 ease-in-out'>
-                                        <input type='checkbox' name='tables[]' value='$table' class='form-checkbox h-5 w-5 text-blue-600 rounded'>
-                                        <span class='ml-2'>$table</span>
-                                      </label>";
-                            }
-                            ?>
+                <!-- Carte d'exportation -->
+                <div class="export-card hover-scale rounded-2xl shadow-xl p-6">
+                    <div class="flex items-center mb-6">
+                        <div class="bg-green-500/10 p-3 rounded-full">
+                            <i class="fas fa-file-export text-green-400 text-2xl"></i>
                         </div>
-                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded transition duration-300 ease-in-out flex items-center justify-center">
-                            <i class="fas fa-download mr-2"></i>Exporter la sélection
+                        <h2 class="text-2xl font-semibold ml-4">Exporter des Données</h2>
+                    </div>
+
+                    <form method="get" action="" id="exportForm" class="space-y-6">
+                        <input type="hidden" name="action" value="export">
+                        
+                        <div class="bg-gray-800/50 rounded-lg p-4 max-h-96 overflow-y-auto custom-scrollbar">
+                            <h3 class="text-lg font-semibold mb-4">Sélection des Tables</h3>
+                            <div class="grid grid-cols-1 gap-2">
+                                <?php
+                                $tables = [
+                                    'logs',
+                                    'ignored_folders',
+                                    'mods',
+                                    'options',
+                                    'roles',
+                                    'users',
+                                    'whitelist',
+                                    'whitelist_roles'
+                                ];
+                                foreach ($tables as $table) {
+                                    echo '
+                                    <label class="flex items-center p-3 rounded-lg hover:bg-gray-700/50 transition-colors">
+                                        <input type="checkbox" name="tables[]" value="'.$table.'" 
+                                            class="form-checkbox h-5 w-5 text-purple-500 border-2 border-gray-600 rounded-md focus:ring-purple-500">
+                                        <span class="ml-3 text-gray-200">'.$table.'</span>
+                                    </label>';
+                                }
+                                ?>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full bg-gradient-to-r from-green-500 to-teal-500 text-white font-bold py-3 rounded-lg hover:opacity-90 transition-opacity">
+                            <i class="fas fa-download mr-2"></i>Exporter la Sélection
                         </button>
                     </form>
                 </div>
             </div>
-        </div>
-        <?php else: ?>
-        <div id="accessDeniedOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-            <div class="bg-gray-800 p-8 rounded-lg text-center">
-                <h3 class="text-xl font-bold mb-4 text-gray-100">Accès refusé</h3>
-                <p class="mb-6 text-gray-300">Vous n'avez pas la permission d'accéder à Importer/Exporter.</p>
-                <a href="../settings" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                    Retour au panel
+            <?php else: ?>
+            <div class="permission-denied-card rounded-2xl shadow-xl p-8 text-center max-w-2xl mx-auto">
+                <div class="bg-red-500/10 p-6 rounded-full inline-block">
+                    <i class="fas fa-ban text-red-400 text-4xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold mt-6">Accès Restreint</h3>
+                <p class="text-gray-300 mt-3">Vous ne disposez pas des autorisations nécessaires pour accéder à cette fonctionnalité.</p>
+                <a href="../settings" class="mt-6 inline-block bg-gray-700 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors">
+                    Retour au Panel
                 </a>
             </div>
+            <?php endif; ?>
         </div>
-        <?php endif; ?>
     </div>
 
-    <div id="errorOverlay" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
-        <div class="bg-gray-800 p-8 rounded-lg text-center">
-            <h3 class="text-xl font-bold mb-4 text-gray-100">Erreur</h3>
-            <p class="mb-6 text-gray-300">Veuillez sélectionner au moins une table à exporter.</p>
-            <button id="closeOverlay" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+    <!-- Overlay d'erreur -->
+    <div id="errorOverlay" class="fixed inset-0 bg-black/70 hidden items-center justify-center p-4 z-50">
+        <div class="bg-gray-800 rounded-2xl shadow-xl max-w-md w-full p-6 text-center">
+            <div class="bg-red-500/10 p-4 rounded-full inline-block">
+                <i class="fas fa-exclamation-triangle text-red-400 text-3xl"></i>
+            </div>
+            <h3 class="text-xl font-bold mt-4">Sélection Requise</h3>
+            <p class="text-gray-300 mt-2">Veuillez sélectionner au moins une table à exporter.</p>
+            <button id="closeOverlay" class="mt-6 bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg transition-colors">
                 Fermer
             </button>
         </div>
     </div>
 
-    <style>
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 8px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: #1F2937;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background-color: #4B5563;
-            border-radius: 20px;
-            border: 2px solid #1F2937;
-        }
-    </style>
-
     <script>
     document.getElementById('json_file').addEventListener('change', function(e) {
-        var fileName = e.target.files[0] ? e.target.files[0].name : 'Aucun fichier choisi';
+        const fileName = e.target.files[0]?.name || 'Aucun fichier sélectionné';
         document.getElementById('file-name').textContent = fileName;
+        document.getElementById('file-selected').classList.toggle('hidden', !e.target.files.length);
     });
 
     document.getElementById('exportForm').addEventListener('submit', function(e) {
-        var checkboxes = this.querySelectorAll('input[name="tables[]"]:checked');
+        const checkboxes = this.querySelectorAll('input[name="tables[]"]:checked');
         if (checkboxes.length === 0) {
             e.preventDefault();
-            document.getElementById('errorOverlay').style.display = 'flex';
+            document.getElementById('errorOverlay').classList.remove('hidden');
         }
     });
 
-    document.getElementById('closeOverlay').addEventListener('click', function() {
-        document.getElementById('errorOverlay').style.display = 'none';
+    document.getElementById('closeOverlay').addEventListener('click', () => {
+        document.getElementById('errorOverlay').classList.add('hidden');
     });
     </script>
 

@@ -117,6 +117,9 @@
                                 <a href="../logs/view" class="block px-4 py-2 text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1" id="menu-item-5">
                                     <i class="bi bi-journal-text mr-2"></i> Logs
                                 </a>
+                                <a href="../update/ui/system" class="block px-4 py-2 text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1" id="menu-item-update">
+                                    <i class="bi bi-arrow-clockwise mr-2"></i> Update
+                                </a>
                             </div>
                         </div>
                     </div>

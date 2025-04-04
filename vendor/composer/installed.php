@@ -46,12 +46,12 @@
             'aliases' => array(),
             'dev_requirement' => false,
         ),
-        'sonata-project/google-authenticator' => array(
-            'pretty_version' => '2.3.1',
-            'version' => '2.3.1.0',
-            'reference' => '71a4189228f93a9662574dc8c65e77ef55061b59',
+        'robthree/twofactorauth' => array(
+            'pretty_version' => '1.8.2',
+            'version' => '1.8.2.0',
+            'reference' => '65681de5a324eae05140ac58b08648a60212afc0',
             'type' => 'library',
-            'install_path' => __DIR__ . '/../sonata-project/google-authenticator',
+            'install_path' => __DIR__ . '/../robthree/twofactorauth',
             'aliases' => array(),
             'dev_requirement' => false,
         ),

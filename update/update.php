@@ -22,7 +22,7 @@ function ajouter_log($user, $action) {
 }
 
 function getCurrentVersion() {
-    $versionFile = __DIR__ . '/../update/version.json';
+    $versionFile = __DIR__ . '/../update/json/version.json';
     if (!file_exists($versionFile)) {
         throw new Exception('Fichier version.json introuvable.');
     }
@@ -35,7 +35,7 @@ function getCurrentVersion() {
 }
 
 function getUpdateInfo() {
-    $updateJsonPath = __DIR__ . '/../update/update.json';
+    $updateJsonPath = __DIR__ . '/../update/json/update.json';
     if (!file_exists($updateJsonPath)) {
         throw new Exception('Fichier update.json introuvable.');
     }
