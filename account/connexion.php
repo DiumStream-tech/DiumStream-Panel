@@ -149,6 +149,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .form-input:focus {
             box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
         }
+        /* Style personnalisé pour le texte saisi */
+        .input-text-black {
+            color: #000 !important;
+        }
+        .input-text-black::placeholder {
+            color: #6b7280 !important; /* Gris Tailwind-500 */
+        }
     </style>
 </head>
 
@@ -179,7 +186,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <label class="block text-sm font-medium text-gray-400 mb-2">Adresse email</label>
                             <div class="relative">
                                 <input type="email" name="email" required
-                                    class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                    class="input-text-black w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                                     placeholder="exemple@domaine.com">
                                 <i class="bi bi-envelope-fill absolute right-4 top-3.5 text-gray-500"></i>
                             </div>
@@ -189,7 +196,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <label class="block text-sm font-medium text-gray-400 mb-2">Mot de passe</label>
                             <div class="relative">
                                 <input id="password" type="password" name="password" required
-                                    class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                    class="input-text-black w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                                     placeholder="••••••••">
                                 <i id="togglePassword" class="bi bi-eye-slash-fill absolute right-4 top-3.5 cursor-pointer text-gray-500 hover:text-indigo-400 transition-colors"></i>
                             </div>
@@ -213,7 +220,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <label class="block text-sm font-medium text-gray-400 mb-2">Code 2FA</label>
                             <div class="relative">
                                 <input type="text" name="2fa_code" required
-                                    class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                    class="input-text-black w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                                     placeholder="123456">
                                 <i class="bi bi-key-fill absolute right-4 top-3.5 text-gray-500"></i>
                             </div>

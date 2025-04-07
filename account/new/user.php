@@ -187,6 +187,13 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
         .animate-fade-in {
             animation: fadeIn 0.3s ease-out;
         }
+        
+        .input-text-black {
+            color: #000 !important;
+        }
+        .input-text-black::placeholder {
+            color: #6b7280 !important;
+        }
     </style>
 </head>
 
@@ -234,20 +241,32 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <div class="form-group">
                         <label class="block text-sm font-medium text-gray-300 mb-2">E-mail</label>
                         <input type="email" name="email" required
-                            class="w-full bg-[#3b424b] border border-[#4a525d] rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500">
+                            class="input-text-black w-full bg-[#3b424b] border border-[#4a525d] rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500">
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="form-group">
                             <label class="block text-sm font-medium text-gray-300 mb-2">Mot de passe</label>
-                            <input type="password" name="password" required
-                                class="w-full bg-[#3b424b] border border-[#4a525d] rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500">
+                            <div class="relative">
+                                <input type="password" name="password" required
+                                    class="input-text-black w-full bg-[#3b424b] border border-[#4a525d] rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 pr-12">
+                                <button type="button" onclick="togglePasswordVisibility(this)"
+                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-indigo-500 transition-colors">
+                                    <i class="bi bi-eye-fill"></i>
+                                </button>
+                            </div>
                         </div>
 
                         <div class="form-group">
                             <label class="block text-sm font-medium text-gray-300 mb-2">Confirmation</label>
-                            <input type="password" name="confirm_password" required
-                            class="w-full bg-[#3b424b] border border-[#4a525d] rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500">
+                            <div class="relative">
+                                <input type="password" name="confirm_password" required
+                                    class="input-text-black w-full bg-[#3b424b] border border-[#4a525d] rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 pr-12">
+                                <button type="button" onclick="togglePasswordVisibility(this)"
+                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-indigo-500 transition-colors">
+                                    <i class="bi bi-eye-fill"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -350,142 +369,171 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <?php endforeach; ?>
                 </div>
             </div>
-        </div>
 
-        <div id="changePasswordOverlay" class="fixed inset-0 bg-black/80 z-50 hidden items-center justify-center p-4">
-            <div class="overlay-content rounded-xl w-full max-w-md p-6 animate-fade-in">
-                <h3 class="text-xl font-bold mb-6 text-indigo-400">
-                    <i class="bi bi-key-fill mr-2"></i>Changer le mot de passe
-                </h3>
+            <!-- Overlay changement mot de passe -->
+            <div id="changePasswordOverlay" class="fixed inset-0 bg-black/80 z-50 hidden items-center justify-center p-4">
+                <div class="overlay-content rounded-xl w-full max-w-md p-6 animate-fade-in">
+                    <h3 class="text-xl font-bold mb-6 text-indigo-400">
+                        <i class="bi bi-key-fill mr-2"></i>Changer le mot de passe
+                    </h3>
 
-                <form method="post" action="">
-                    <input type="hidden" name="user_id" id="changePasswordUserId">
+                    <form method="post" action="">
+                        <input type="hidden" name="user_id" id="changePasswordUserId">
 
-                    <div class="space-y-4">
-                        <div class="form-group">
-                            <label class="block text-sm font-medium text-gray-300 mb-2">Nouveau mot de passe</label>
-                            <input type="password" name="new_password" required
-                                class="w-full bg-[#3b424b] border border-[#4a525d] rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500">
+                        <div class="space-y-4">
+                            <div class="form-group">
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Nouveau mot de passe</label>
+                                <div class="relative">
+                                    <input type="password" name="new_password" required
+                                        class="input-text-black w-full bg-[#3b424b] border border-[#4a525d] rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 pr-12">
+                                    <button type="button" onclick="togglePasswordVisibility(this)"
+                                        class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-indigo-500 transition-colors">
+                                        <i class="bi bi-eye-fill"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Confirmation</label>
+                                <div class="relative">
+                                    <input type="password" name="confirm_new_password" required
+                                        class="input-text-black w-full bg-[#3b424b] border border-[#4a525d] rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 pr-12">
+                                    <button type="button" onclick="togglePasswordVisibility(this)"
+                                        class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-indigo-500 transition-colors">
+                                        <i class="bi bi-eye-fill"></i>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="form-group">
-                            <label class="block text-sm font-medium text-gray-300 mb-2">Confirmation</label>
-                            <input type="password" name="confirm_new_password" required
-                                class="w-full bg-[#3b424b] border border-[#4a525d] rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500">
+                        <div class="flex justify-end space-x-3 mt-6">
+                            <button type="button" onclick="hideChangePasswordOverlay()"
+                                class="bg-[#4a525d] hover:bg-[#5a6470] text-white px-6 py-2 rounded-lg transition-all">
+                                Annuler
+                            </button>
+                            <button type="submit" name="change_password"
+                                class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-lg transition-all">
+                                Enregistrer
+                            </button>
                         </div>
-                    </div>
-
-                    <div class="flex justify-end space-x-3 mt-6">
-                        <button type="button" onclick="hideChangePasswordOverlay()"
-                            class="bg-[#4a525d] hover:bg-[#5a6470] text-white px-6 py-2 rounded-lg transition-all">
-                            Annuler
-                        </button>
-                        <button type="submit" name="change_password"
-                            class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-lg transition-all">
-                            Enregistrer
-                        </button>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
-        </div>
 
-        <div id="changePermissionsOverlay" class="fixed inset-0 bg-black/80 z-50 hidden items-center justify-center p-4">
-            <div class="overlay-content rounded-xl w-full max-w-md p-6 animate-fade-in">
-                <h3 class="text-xl font-bold mb-6 text-indigo-400">
-                    <i class="bi bi-shield-lock-fill mr-2"></i>Modifier les permissions
-                </h3>
+            <!-- Overlay permissions -->
+            <div id="changePermissionsOverlay" class="fixed inset-0 bg-black/80 z-50 hidden items-center justify-center p-4">
+                <div class="overlay-content rounded-xl w-full max-w-md p-6 animate-fade-in">
+                    <h3 class="text-xl font-bold mb-6 text-indigo-400">
+                        <i class="bi bi-shield-lock-fill mr-2"></i>Modifier les permissions
+                    </h3>
 
-                <form method="post" action="">
-                    <input type="hidden" name="user_id" id="changePermissionsUserId">
+                    <form method="post" action="">
+                        <input type="hidden" name="user_id" id="changePermissionsUserId">
 
-                    <div class="grid grid-cols-1 gap-4">
-                        <label class="flex items-center space-x-3 hover:bg-[#3b424b]/50 p-2 rounded-lg transition-all">
-                            <input type="checkbox" name="permissions[]" value="logs_view" id="perm_logs_view"
+                        <div class="grid grid-cols-1 gap-4">
+                            <label class="flex items-center space-x-3 hover:bg-[#3b424b]/50 p-2 rounded-lg transition-all">
+                                <input type="checkbox" name="permissions[]" value="logs_view" id="perm_logs_view"
+                                    class="form-checkbox h-5 w-5 text-indigo-600 border-2 border-[#4a525d] rounded focus:ring-indigo-500">
+                                <span class="text-gray-300">Voir les logs</span>
+                            </label>
+
+                            <label class="flex items-center space-x-3 hover:bg-[#3b424b]/50 p-2 rounded-lg transition-all">
+                                <input type="checkbox" name="permissions[]" value="file_access" id="perm_file_access"
+                                    class="form-checkbox h-5 w-5 text-indigo-600 border-2 border-[#4a525d] rounded focus:ring-indigo-500">
+                                <span class="text-gray-300">Accès aux fichiers</span>
+                            </label>
+
+                            <label class="flex items-center space-x-3 hover:bg-[#3b424b]/50 p-2 rounded-lg transition-all">
+                                <input type="checkbox" name="permissions[]" value="register_users" id="perm_register_users"
                                 class="form-checkbox h-5 w-5 text-indigo-600 border-2 border-[#4a525d] rounded focus:ring-indigo-500">
-                            <span class="text-gray-300">Voir les logs</span>
-                        </label>
+                                <span class="text-gray-300">Créer des utilisateurs</span>
+                            </label>
 
-                        <label class="flex items-center space-x-3 hover:bg-[#3b424b]/50 p-2 rounded-lg transition-all">
-                            <input type="checkbox" name="permissions[]" value="file_access" id="perm_file_access"
-                                class="form-checkbox h-5 w-5 text-indigo-600 border-2 border-[#4a525d] rounded focus:ring-indigo-500">
-                            <span class="text-gray-300">Accès aux fichiers</span>
-                        </label>
+                            <label class="flex items-center space-x-3 hover:bg-[#3b424b]/50 p-2 rounded-lg transition-all">
+                                <input type="checkbox" name="permissions[]" value="export_import" id="perm_export_import"
+                                    class="form-checkbox h-5 w-5 text-indigo-600 border-2 border-[#4a525d] rounded focus:ring-indigo-500">
+                                <span class="text-gray-300">Exporter/Importer</span>
+                            </label>
+                        </div>
 
-                        <label class="flex items-center space-x-3 hover:bg-[#3b424b]/50 p-2 rounded-lg transition-all">
-                            <input type="checkbox" name="permissions[]" value="register_users" id="perm_register_users"
-                            class="form-checkbox h-5 w-5 text-indigo-600 border-2 border-[#4a525d] rounded focus:ring-indigo-500">
-                            <span class="text-gray-300">Créer des utilisateurs</span>
-                        </label>
-
-                        <label class="flex items-center space-x-3 hover:bg-[#3b424b]/50 p-2 rounded-lg transition-all">
-                            <input type="checkbox" name="permissions[]" value="export_import" id="perm_export_import"
-                                class="form-checkbox h-5 w-5 text-indigo-600 border-2 border-[#4a525d] rounded focus:ring-indigo-500">
-                            <span class="text-gray-300">Exporter/Importer</span>
-                        </label>
-                    </div>
-
-                    <div class="flex justify-end space-x-3 mt-6">
-                        <button type="button" onclick="hideChangePermissionsOverlay()"
-                            class="bg-[#4a525d] hover:bg-[#5a6470] text-white px-6 py-2 rounded-lg transition-all">
-                            Annuler
-                        </button>
-                        <button type="submit" name="change_permissions"
-                            class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-lg transition-all">
-                            Enregistrer
-                        </button>
-                    </div>
-                </form>
+                        <div class="flex justify-end space-x-3 mt-6">
+                            <button type="button" onclick="hideChangePermissionsOverlay()"
+                                class="bg-[#4a525d] hover:bg-[#5a6470] text-white px-6 py-2 rounded-lg transition-all">
+                                Annuler
+                            </button>
+                            <button type="submit" name="change_permissions"
+                                class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-lg transition-all">
+                                Enregistrer
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
+
+            <script>
+                // Fonctions de gestion des overlays
+                function showChangePasswordOverlay(userId) {
+                    document.getElementById('changePasswordUserId').value = userId;
+                    document.getElementById('changePasswordOverlay').classList.remove('hidden');
+                    document.getElementById('changePasswordOverlay').classList.add('flex');
+                }
+
+                function hideChangePasswordOverlay() {
+                    document.getElementById('changePasswordOverlay').classList.remove('flex');
+                    document.getElementById('changePasswordOverlay').classList.add('hidden');
+                }
+
+                function showChangePermissionsOverlay(userId, permissions) {
+                    document.getElementById('changePermissionsUserId').value = userId;
+                    
+                    const permArray = permissions.split(',');
+                    document.getElementById('perm_logs_view').checked = permArray.includes('logs_view');
+                    document.getElementById('perm_file_access').checked = permArray.includes('file_access');
+                    document.getElementById('perm_register_users').checked = permArray.includes('register_users');
+                    document.getElementById('perm_export_import').checked = permArray.includes('export_import');
+                    
+                    document.getElementById('changePermissionsOverlay').classList.remove('hidden');
+                    document.getElementById('changePermissionsOverlay').classList.add('flex');
+                }
+
+                function hideChangePermissionsOverlay() {
+                    document.getElementById('changePermissionsOverlay').classList.remove('flex');
+                    document.getElementById('changePermissionsOverlay').classList.add('hidden');
+                }
+
+                function togglePasswordVisibility(button) {
+                    const input = button.previousElementSibling;
+                    const icon = button.querySelector('i');
+                    
+                    if (input.type === "password") {
+                        input.type = "text";
+                        icon.classList.remove('bi-eye-fill');
+                        icon.classList.add('bi-eye-slash-fill');
+                    } else {
+                        input.type = "password";
+                        icon.classList.remove('bi-eye-slash-fill');
+                        icon.classList.add('bi-eye-fill');
+                    }
+                }
+
+                function confirmDelete() {
+                    return Swal.fire({
+                        title: 'Êtes-vous sûr ?',
+                        text: "Cette action est irréversible !",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'Oui, supprimer !',
+                        cancelButtonText: 'Annuler'
+                    }).then((result) => {
+                        return result.isConfirmed;
+                    });
+                }
+            </script>
+
+            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         </div>
-
-        <script>
-            function showChangePasswordOverlay(userId) {
-                document.getElementById('changePasswordUserId').value = userId;
-                document.getElementById('changePasswordOverlay').classList.remove('hidden');
-                document.getElementById('changePasswordOverlay').classList.add('flex');
-            }
-
-            function hideChangePasswordOverlay() {
-                document.getElementById('changePasswordOverlay').classList.remove('flex');
-                document.getElementById('changePasswordOverlay').classList.add('hidden');
-            }
-
-            function showChangePermissionsOverlay(userId, permissions) {
-                document.getElementById('changePermissionsUserId').value = userId;
-                
-                const permArray = permissions.split(',');
-                document.getElementById('perm_logs_view').checked = permArray.includes('logs_view');
-                document.getElementById('perm_file_access').checked = permArray.includes('file_access');
-                document.getElementById('perm_register_users').checked = permArray.includes('register_users');
-                document.getElementById('perm_export_import').checked = permArray.includes('export_import');
-                
-                document.getElementById('changePermissionsOverlay').classList.remove('hidden');
-                document.getElementById('changePermissionsOverlay').classList.add('flex');
-            }
-
-            function hideChangePermissionsOverlay() {
-                document.getElementById('changePermissionsOverlay').classList.remove('flex');
-                document.getElementById('changePermissionsOverlay').classList.add('hidden');
-            }
-
-            function confirmDelete() {
-                return Swal.fire({
-                    title: 'Êtes-vous sûr ?',
-                    text: "Cette action est irréversible !",
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#3085d6',
-                    cancelButtonColor: '#d33',
-                    confirmButtonText: 'Oui, supprimer !',
-                    cancelButtonText: 'Annuler'
-                }).then((result) => {
-                    return result.isConfirmed;
-                });
-            }
-        </script>
-
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-        
     <?php endif; ?>
 
     <?php require_once '../../ui/footer.php'; ?>

@@ -44,12 +44,20 @@ if (isset($_POST['disable_2fa'])) {
 
 if (isset($_POST['change_email'])) {
     $new_email = filter_input(INPUT_POST, 'new_email', FILTER_VALIDATE_EMAIL);
+    
     if ($new_email) {
-        $stmt = $pdo->prepare("UPDATE users SET email = :new_email WHERE email = :current_email");
-        $stmt->execute(['new_email' => $new_email, 'current_email' => $user_email]);
-        $_SESSION['user_email'] = $new_email;
-        $user_email = $new_email;
-        $success_message = "Adresse e-mail mise à jour avec succès.";
+        $check_stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE email = :new_email");
+        $check_stmt->execute(['new_email' => $new_email]);
+        
+        if ($check_stmt->fetchColumn() > 0) {
+            $error_message = "Cette adresse email est déjà utilisée.";
+        } else {
+            $stmt = $pdo->prepare("UPDATE users SET email = :new_email WHERE email = :current_email");
+            $stmt->execute(['new_email' => $new_email, 'current_email' => $user_email]);
+            $_SESSION['user_email'] = $new_email;
+            $user_email = $new_email;
+            $success_message = "Adresse e-mail mise à jour avec succès.";
+        }
     } else {
         $error_message = "Adresse e-mail invalide.";
     }
@@ -113,6 +121,16 @@ if (isset($_POST['change_password'])) {
                     </h2>
                     <form method="post" class="space-y-4">
                         <div class="form-group">
+                            <label class="block text-sm font-medium mb-2">Email actuel</label>
+                            <div class="relative">
+                                <input type="email" readonly
+                                    class="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 pr-10 text-gray-300 cursor-not-allowed"
+                                    value="<?php echo htmlspecialchars($user_email); ?>">
+                                <i class="bi bi-envelope-fill absolute right-3 top-2.5 text-gray-400"></i>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
                             <label class="block text-sm font-medium mb-2">Nouvelle adresse email</label>
                             <div class="relative">
                                 <input type="email" name="new_email" required
@@ -147,18 +165,22 @@ if (isset($_POST['change_password'])) {
                             <div class="form-group">
                                 <label class="block text-sm font-medium mb-2">Nouveau mot de passe</label>
                                 <div class="relative">
-                                    <input type="password" name="new_password" required
+                                    <input type="password" id="new_password" name="new_password" required
                                         class="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 pr-10 text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all">
                                     <i class="bi bi-key-fill absolute right-3 top-2.5 text-gray-400"></i>
+                                    <i class="bi bi-eye-fill absolute right-10 top-2.5 text-gray-400 cursor-pointer hover:text-gray-300 transition-all"
+                                        onclick="togglePasswordVisibility('new_password')"></i>
                                 </div>
                             </div>
 
                             <div class="form-group">
                                 <label class="block text-sm font-medium mb-2">Confirmation</label>
                                 <div class="relative">
-                                    <input type="password" name="confirm_password" required
+                                    <input type="password" id="confirm_password" name="confirm_password" required
                                         class="w-full bg-gray-700 border border-gray-600 rounded-lg py-2 px-4 pr-10 text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all">
                                     <i class="bi bi-check-circle-fill absolute right-3 top-2.5 text-gray-400"></i>
+                                    <i class="bi bi-eye-fill absolute right-10 top-2.5 text-gray-400 cursor-pointer hover:text-gray-300 transition-all"
+                                        onclick="togglePasswordVisibility('confirm_password')"></i>
                                 </div>
                             </div>
                         </div>
@@ -169,9 +191,9 @@ if (isset($_POST['change_password'])) {
                         </button>
                     </form>
                 </section>
-
+                
                 <section class="bg-gray-800 rounded-xl shadow-2xl p-6 hover:shadow-indigo-500/10 transition-shadow">
-                    <h2 class="text-xl font-semibold mb-4 flex items-center">
+                     <h2 class="text-xl font-semibold mb-4 flex items-center">
                         <i class="bi bi-shield-check-fill mr-2 text-indigo-400"></i>
                         Authentification à deux facteurs (2FA)
                     </h2>
@@ -225,7 +247,6 @@ if (isset($_POST['change_password'])) {
             </div>
         </div>
     </main>
-
     <?php include '../ui/footer.php'; ?>
 
     <script>
@@ -241,6 +262,19 @@ if (isset($_POST['change_password'])) {
             document.getElementById('qrCodeContainer').classList.remove('hidden');
             document.getElementById('confirmForm').classList.remove('hidden');
             document.getElementById('generateQRCode').classList.add('hidden');
+        }
+
+        function togglePasswordVisibility(inputId) {
+            const input = document.getElementById(inputId);
+            const icon = input.parentElement.querySelector('.bi-eye-fill');
+            
+            if (input.type === "password") {
+                input.type = "text";
+                icon.classList.replace('bi-eye-fill', 'bi-eye-slash-fill');
+            } else {
+                input.type = "password";
+                icon.classList.replace('bi-eye-slash-fill', 'bi-eye-fill');
+            }
         }
 
         function showMessage(message, isError = false) {
@@ -268,4 +302,3 @@ if (isset($_POST['change_password'])) {
     </script>
 </body>
 </html>
-

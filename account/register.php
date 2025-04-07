@@ -79,7 +79,6 @@ if (isset($_POST['submit'])) {
     <style>
         .glass-effect {
             background: rgba(31, 41, 55, 0.8);
-            backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
         .gradient-text {
@@ -87,18 +86,21 @@ if (isset($_POST['submit'])) {
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        .form-input {
-            transition: all 0.3s ease;
-        }
         .form-input:focus {
             box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+        .input-text-black {
+            color: #000 !important;
+        }
+        .input-text-black::placeholder {
+            color: #6b7280 !important;
         }
     </style>
 </head>
 <body class="bg-gray-900 text-white min-h-screen flex flex-col">
     <div class="flex-grow flex items-center">
         <div class="container mx-auto px-4 py-12">
-            <div class="max-w-md mx-auto glass-effect rounded-xl shadow-2xl overflow-hidden">
+            <div class="max-w-md mx-auto glass-effect rounded-xl overflow-hidden">
                 <div class="p-8">
                     <div class="text-center mb-8">
                         <i class="bi bi-shield-lock-fill text-6xl gradient-text"></i>
@@ -122,7 +124,7 @@ if (isset($_POST['submit'])) {
                             <label class="block text-sm font-medium text-gray-400 mb-2">Email Administrateur</label>
                             <div class="relative">
                                 <input type="email" name="email" required
-                                    class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                    class="input-text-black w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                                     placeholder="admin@exemple.com">
                                 <i class="bi bi-envelope-fill absolute right-4 top-3.5 text-gray-500"></i>
                             </div>
@@ -132,7 +134,7 @@ if (isset($_POST['submit'])) {
                             <label class="block text-sm font-medium text-gray-400 mb-2">Mot de passe</label>
                             <div class="relative">
                                 <input type="password" name="password" id="password" required
-                                    class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                    class="input-text-black w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                                     placeholder="••••••••">
                                 <i id="togglePassword" class="bi bi-eye-slash-fill absolute right-4 top-3.5 cursor-pointer text-gray-500 hover:text-indigo-400 transition-colors"></i>
                             </div>
@@ -142,7 +144,7 @@ if (isset($_POST['submit'])) {
                             <label class="block text-sm font-medium text-gray-400 mb-2">Confirmation</label>
                             <div class="relative">
                                 <input type="password" name="confirm_password" id="confirm_password" required
-                                    class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                    class="input-text-black w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                                     placeholder="••••••••">
                                 <i id="toggleConfirmPassword" class="bi bi-eye-slash-fill absolute right-4 top-3.5 cursor-pointer text-gray-500 hover:text-indigo-400 transition-colors"></i>
                             </div>
