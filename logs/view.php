@@ -34,6 +34,129 @@ if (isset($_SESSION['user_token'])) {
     header('Location: ../account/connexion');
     exit();
 }
+
+// Vérification des logs existants
+$stmtCheck = $pdo->query("SELECT COUNT(*) as count FROM logs");
+$logCount = $stmtCheck->fetch(PDO::FETCH_ASSOC)['count'];
+
+// Gestion des exports
+if (isset($_POST['export_file'])) {
+    if (!hasPermission($utilisateur, 'logs_export')) {
+        error_log('Tentative d\'export CSV non autorisée par '.$utilisateur['username']);
+        exit('Permissions insuffisantes');
+    }
+
+    if ($logCount == 0) {
+        $_SESSION['export_error'] = 'Aucun log à exporter';
+        header('Location: ' . $_SERVER['HTTP_REFERER']);
+        exit();
+    }
+
+    header('Content-Type: text/csv');
+    header('Content-Disposition: attachment; filename="logs_export_'.date('Y-m-d_H-i').'.csv"');
+    
+    $output = fopen('php://output', 'w');
+    fputcsv($output, ['Utilisateur', 'Date/Heure', 'Action'], ';');
+    
+    $stmt = $pdo->query("SELECT * FROM logs ORDER BY timestamp DESC");
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        fputcsv($output, [
+            $row['user'],
+            date('d/m/Y H:i', strtotime($row['timestamp'])),
+            $row['action']
+        ], ';');
+    }
+    
+    fclose($output);
+    exit();
+}
+
+if (isset($_POST['export_discord'])) {
+    if (!hasPermission($utilisateur, 'logs_export')) {
+        error_log('Tentative d\'export Discord non autorisée par '.$utilisateur['username']);
+        exit('Permissions insuffisantes');
+    }
+
+    if ($logCount == 0) {
+        $_SESSION['export_error'] = 'Aucun log à exporter';
+        header('Location: ' . $_SERVER['HTTP_REFERER']);
+        exit();
+    }
+
+    // Récupération des logs
+    $stmt = $pdo->query("SELECT * FROM logs ORDER BY timestamp DESC");
+    $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Préparation des données pour l'embed
+    $embeds = [];
+    $currentMessage = "**📜 Export des logs - ".date('d/m/Y H:i')."**\n";
+    
+    foreach ($logs as $log) {
+        $line = sprintf(
+            "🔹 **%s** [%s]\n`%s`\n\n",
+            htmlspecialchars($log['user']),
+            date('d/m H:i', strtotime($log['timestamp'])),
+            htmlspecialchars($log['action'])
+        );
+        
+        if (strlen($currentMessage) + strlen($line) > 1900) {
+            $embeds[] = [
+                'title' => '📜 Logs système',
+                'color' => 0x5865F2,
+                'description' => $currentMessage,
+                'footer' => [
+                    'text' => 'Export généré via le panel administrateur'
+                ]
+            ];
+            $currentMessage = "";
+        }
+        
+        $currentMessage .= $line;
+    }
+    
+    if (!empty($currentMessage)) {
+        $embeds[] = [
+            'title' => '📜 Logs système',
+            'color' => 0x5865F2,
+            'description' => $currentMessage,
+            'footer' => [
+                'text' => 'Export généré via le panel administrateur'
+            ]
+        ];
+    }
+
+    // Configuration du webhook
+    $webhookUrl = 'https://discord.com/api/webhooks/1358751540063633561/-KYN13ZAFXSMeoSA2R_KMOZL2aIWa9PAniCuJCvbHwi0xWLEdq0i97Jc-mAVZwpZA7pX';
+    
+    $chunks = array_chunk($embeds, 10);
+    
+    foreach ($chunks as $chunk) {
+        $data = [
+            'username' => 'Logs Exporter',
+            'avatar_url' => 'https://example.com/logo.png',
+            'embeds' => $chunk
+        ];
+
+        $ch = curl_init($webhookUrl);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($httpCode != 204) {
+            echo "<script>alert('Erreur lors de l\'envoi à Discord (Code $httpCode)')</script>";
+            exit();
+        }
+        
+        usleep(500000);
+    }
+
+    echo "<script>alert('Export Discord envoyé avec succès')</script>";
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -87,7 +210,6 @@ if (isset($_SESSION['user_token'])) {
     </style>
 </head>
 <body class="bg-gray-900">
-
 <div class="main-content">
     <div class="flex-grow">
         <div class="container mx-auto mt-10 p-6 bg-gray-900 text-white rounded-lg shadow-2xl border-2 border-gray-800">
@@ -103,6 +225,18 @@ if (isset($_SESSION['user_token'])) {
                     </div>
                 </div>
             <?php else: ?>
+                <?php if (isset($_SESSION['export_error'])): ?>
+                <div class="fixed inset-0 bg-black/75 z-50 flex items-center justify-center">
+                    <div class="bg-gray-800 p-8 rounded-xl text-center animate-fade-in">
+                        <h3 class="text-2xl font-bold mb-4 text-red-400">Erreur d'export</h3>
+                        <p class="mb-6 text-gray-300"><?= htmlspecialchars($_SESSION['export_error']) ?></p>
+                        <button onclick="closeOverlay()" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-all hover:scale-105">
+                            Fermer
+                        </button>
+                    </div>
+                </div>
+                <?php unset($_SESSION['export_error']); endif; ?>
+
                 <div class="space-y-8">
                     <div class="flex flex-col md:flex-row justify-between items-start gap-4">
                         <div>
@@ -112,14 +246,35 @@ if (isset($_SESSION['user_token'])) {
                             <p class="text-gray-400 mt-2">Journal des activités système</p>
                         </div>
                         
-                        <?php if (hasPermission($utilisateur, 'purge_logs')): ?>
-                        <form action="purge_logs.php" method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir purger tous les logs ?')">
-                            <button type="submit" name="purge_logs" class="flex items-center gap-2 bg-red-600/25 hover:bg-red-600/50 border border-red-600 text-red-400 px-6 py-3 rounded-lg transition-all hover:scale-[1.02] group">
-                                <i class="fas fa-trash group-hover:animate-pulse"></i>
-                                Purger les Logs
-                            </button>
-                        </form>
-                        <?php endif; ?>
+                        <div class="flex flex-col md:flex-row gap-4">
+                            <?php if (hasPermission($utilisateur, 'purge_logs')): ?>
+                            <form action="purge_logs.php" method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir purger tous les logs ?')">
+                                <button type="submit" name="purge_logs" class="flex items-center gap-2 bg-red-600/25 hover:bg-red-600/50 border border-red-600 text-red-400 px-6 py-3 rounded-lg transition-all hover:scale-[1.02] group">
+                                    <i class="fas fa-trash group-hover:animate-pulse"></i>
+                                    Purger les Logs
+                                </button>
+                            </form>
+                            <?php endif; ?>
+                            
+                            <?php if (hasPermission($utilisateur, 'logs_export') && $logCount > 0): ?>
+                            <form method="POST" class="flex gap-4">
+                                <button type="submit" name="export_file" class="flex items-center gap-2 bg-green-600/25 hover:bg-green-600/50 border border-green-600 text-green-400 px-6 py-3 rounded-lg transition-all hover:scale-[1.02] group">
+                                    <i class="fas fa-file-export group-hover:animate-bounce"></i>
+                                    Exporter en CSV
+                                </button>
+                                
+                                <button type="submit" name="export_discord" class="flex items-center gap-2 bg-indigo-600/25 hover:bg-indigo-600/50 border border-indigo-600 text-indigo-400 px-6 py-3 rounded-lg transition-all hover:scale-[1.02] group">
+                                    <i class="fab fa-discord group-hover:animate-spin"></i>
+                                    Exporter vers Discord
+                                </button>
+                            </form>
+                            <?php elseif(hasPermission($utilisateur, 'logs_export') && $logCount === 0): ?>
+                            <div class="flex items-center gap-2 px-6 py-3 text-gray-400">
+                                <i class="fas fa-exclamation-circle"></i>
+                                Aucun log à exporter
+                            </div>
+                            <?php endif; ?>
+                        </div>
                     </div>
 
                     <div class="bg-gray-800/50 rounded-xl overflow-hidden border border-gray-700/50">
@@ -144,7 +299,7 @@ if (isset($_SESSION['user_token'])) {
                                 </thead>
                                 <tbody class="divide-y divide-gray-700/50">
                                     <?php
-                                    $stmt = $pdo->query("SELECT * FROM logs ORDER BY timestamp DESC");
+                                    $stmt = $pdo->query("SELECT * FROM logs ORDER BY timestamp DESC LIMIT 50");
                                     while ($logEntry = $stmt->fetch(PDO::FETCH_ASSOC)):
                                     ?>
                                     <tr class="log-entry log-row hover:bg-gray-800/25 transition-all duration-300">
@@ -192,8 +347,7 @@ function sortTable(columnIndex) {
     const table = document.getElementById('logsTable');
     const rows = Array.from(table.rows).slice(1);
     const isAsc = table.getAttribute('data-sort-direction') === 'asc';
-    
-    // Ajout d'une animation de flèche
+
     const th = table.querySelectorAll('th')[columnIndex];
     table.querySelectorAll('th').forEach(header => {
         header.querySelector('.sort-indicator')?.remove();
@@ -209,7 +363,9 @@ function sortTable(columnIndex) {
         const bValue = b.cells[columnIndex].textContent.trim();
         
         if (columnIndex === 1) {
-            return isAsc ? new Date(bValue) - new Date(aValue) : new Date(aValue) - new Date(bValue);
+            const dateA = new Date(aValue.split(' ').reverse().join('-'));
+            const dateB = new Date(bValue.split(' ').reverse().join('-'));
+            return isAsc ? dateB - dateA : dateA - dateB;
         }
         
         return isAsc ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
@@ -236,6 +392,10 @@ document.getElementById('searchInput').addEventListener('input', (e) => {
         row.style.display = text.includes(searchValue) ? '' : 'none';
     });
 });
+
+function closeOverlay() {
+    document.querySelector('.fixed.inset-0').remove();
+}
 </script>
 
 <?php require_once '../ui/footer.php'; ?>

@@ -280,6 +280,18 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             </label>
 
                             <label class="flex items-center space-x-3 hover:bg-[#4a525d]/50 p-2 rounded-lg transition-all">
+                                <input type="checkbox" name="permissions[]" value="purge_logs"
+                                    class="form-checkbox h-5 w-5 text-indigo-600 border-2 border-[#4a525d] rounded focus:ring-indigo-500">
+                                <span class="text-gray-300">Purger les logs</span>
+                            </label>
+
+                            <label class="flex items-center space-x-3 hover:bg-[#3b424b]/50 p-2 rounded-lg transition-all">
+                                <input type="checkbox" name="permissions[]" value="logs_export"
+                                    class="form-checkbox h-5 w-5 text-indigo-600 border-2 border-[#4a525d] rounded focus:ring-indigo-500">
+                                <span class="text-gray-300">Export Logs</span>
+                            </label>
+
+                            <label class="flex items-center space-x-3 hover:bg-[#4a525d]/50 p-2 rounded-lg transition-all">
                                 <input type="checkbox" name="permissions[]" value="file_access"
                                     class="form-checkbox h-5 w-5 text-indigo-600 border-2 border-[#4a525d] rounded focus:ring-indigo-500">
                                 <span class="text-gray-300">Accès aux fichiers</span>
@@ -370,7 +382,6 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 </div>
             </div>
 
-            <!-- Overlay changement mot de passe -->
             <div id="changePasswordOverlay" class="fixed inset-0 bg-black/80 z-50 hidden items-center justify-center p-4">
                 <div class="overlay-content rounded-xl w-full max-w-md p-6 animate-fade-in">
                     <h3 class="text-xl font-bold mb-6 text-indigo-400">
@@ -420,7 +431,6 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 </div>
             </div>
 
-            <!-- Overlay permissions -->
             <div id="changePermissionsOverlay" class="fixed inset-0 bg-black/80 z-50 hidden items-center justify-center p-4">
                 <div class="overlay-content rounded-xl w-full max-w-md p-6 animate-fade-in">
                     <h3 class="text-xl font-bold mb-6 text-indigo-400">
@@ -435,6 +445,18 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <input type="checkbox" name="permissions[]" value="logs_view" id="perm_logs_view"
                                     class="form-checkbox h-5 w-5 text-indigo-600 border-2 border-[#4a525d] rounded focus:ring-indigo-500">
                                 <span class="text-gray-300">Voir les logs</span>
+                            </label>
+
+                            <label class="flex items-center space-x-3 hover:bg-[#4a525d]/50 p-2 rounded-lg transition-all">
+                                <input type="checkbox" name="permissions[]" value="purge_logs" id="perm_purge_logs"
+                                    class="form-checkbox h-5 w-5 text-indigo-600 border-2 border-[#4a525d] rounded focus:ring-indigo-500">
+                                <span class="text-gray-300">Purger les logs</span>
+                            </label>
+
+                            <label class="flex items-center space-x-3 hover:bg-[#3b424b]/50 p-2 rounded-lg transition-all">
+                                <input type="checkbox" name="permissions[]" value="logs_export" id="perm_logs_export"
+                                    class="form-checkbox h-5 w-5 text-indigo-600 border-2 border-[#4a525d] rounded focus:ring-indigo-500">
+                                <span class="text-gray-300">Export Logs</span>
                             </label>
 
                             <label class="flex items-center space-x-3 hover:bg-[#3b424b]/50 p-2 rounded-lg transition-all">
@@ -471,7 +493,6 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
             </div>
 
             <script>
-                // Fonctions de gestion des overlays
                 function showChangePasswordOverlay(userId) {
                     document.getElementById('changePasswordUserId').value = userId;
                     document.getElementById('changePasswordOverlay').classList.remove('hidden');
@@ -488,6 +509,9 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     
                     const permArray = permissions.split(',');
                     document.getElementById('perm_logs_view').checked = permArray.includes('logs_view');
+                    document.getElementById('perm_purge_logs').checked = permArray.includes('purge_logs');
+                    document.getElementById('perm_logs_export').checked = permArray.includes('logs_export');
+
                     document.getElementById('perm_file_access').checked = permArray.includes('file_access');
                     document.getElementById('perm_register_users').checked = permArray.includes('register_users');
                     document.getElementById('perm_export_import').checked = permArray.includes('export_import');
