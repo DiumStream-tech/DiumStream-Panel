@@ -1,33 +1,13 @@
 {
     "versions": [
         {
-            "version": "0.2.1",
+            "version": "0.2.2",
             "date": "07-04-2025",
             "changes": [
                 {
                     "type": "UI-UX",
-                    "title": "UI-UX connexion",
-                    "description": "Fix visual"
-                },
-                {
-                    "type": "UI-UX",
-                    "title": "UI-UX register",
-                    "description": "Fix Visual"
-                },
-                {
-                    "type": "UI-UX",
-                    "title": "UI-UX user",
-                    "description": "Fix Visual"
-                },
-                {
-                    "type": "UI-UX",
-                    "title": "UI-UX setdb",
-                    "description": "Petit refonte de l'interface"
-                },
-                {
-                    "type": "UI-UX",
-                    "title": "UI-UX mon_compte",
-                    "description": "Ajoute pour voire l'adresse mail qui est utiliser est pour voire le nouveau mdp"
+                    "title": "UI-UX logs",
+                    "description": "Update de l'interface des logs"
                 }
             ]
         }

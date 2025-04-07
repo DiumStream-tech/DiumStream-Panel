@@ -41,13 +41,48 @@ if (isset($_SESSION['user_token'])) {
 <head>
     <?php require_once '../ui/header3.php'; ?>
     <style>
+        html, body {
+            height: 100%;
+        }
+        
         .main-content {
             min-height: calc(100vh - 150px);
             display: flex;
             flex-direction: column;
         }
+        
         .flex-grow {
             flex-grow: 1;
+        }
+
+        .log-entry {
+            background: linear-gradient(145deg, rgba(39, 39, 42, 0.4), rgba(63, 63, 70, 0.2));
+            margin: 2px 0;
+            border-radius: 8px;
+        }
+
+        .log-entry:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.15);
+        }
+
+        .log-row {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .search-input {
+            background: rgba(17, 24, 39, 0.5) !important;
+            backdrop-filter: blur(10px);
+        }
+
+        .pagination-btn {
+            background: linear-gradient(135deg, rgba(55, 65, 81, 0.5), rgba(31, 41, 55, 0.5));
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .pagination-btn:hover {
+            background: linear-gradient(135deg, rgba(55, 65, 81, 0.7), rgba(31, 41, 55, 0.7));
         }
     </style>
 </head>
@@ -92,7 +127,7 @@ if (isset($_SESSION['user_token'])) {
                             <div class="flex justify-between items-center">
                                 <h3 class="text-lg font-semibold">Historique des activités</h3>
                                 <div class="relative">
-                                    <input type="text" placeholder="Rechercher..." class="bg-gray-900/50 border border-gray-700/50 rounded-lg pl-10 pr-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent" id="searchInput">
+                                    <input type="text" placeholder="Rechercher..." class="search-input bg-gray-900/50 border border-gray-700/50 rounded-lg pl-10 pr-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent" id="searchInput">
                                     <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
                                 </div>
                             </div>
@@ -112,10 +147,20 @@ if (isset($_SESSION['user_token'])) {
                                     $stmt = $pdo->query("SELECT * FROM logs ORDER BY timestamp DESC");
                                     while ($logEntry = $stmt->fetch(PDO::FETCH_ASSOC)):
                                     ?>
-                                    <tr class="hover:bg-gray-800/25 transition-colors duration-200">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-100"><?= htmlspecialchars($logEntry['user']) ?></td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300"><?= htmlspecialchars($logEntry['timestamp']) ?></td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300"><?= htmlspecialchars($logEntry['action']) ?></td>
+                                    <tr class="log-entry log-row hover:bg-gray-800/25 transition-all duration-300">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-100 relative">
+                                            <span class="text-blue-400">•</span>
+                                            <span class="ml-3"><?= htmlspecialchars($logEntry['user']) ?></span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                                            <?= date('d/m/Y H:i', strtotime(htmlspecialchars($logEntry['timestamp']))) ?>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                                            <div class="inline-flex items-center gap-2 bg-gray-700/25 px-3 py-1 rounded-full">
+                                                <i class="fas fa-terminal text-xs text-purple-400"></i>
+                                                <span><?= htmlspecialchars($logEntry['action']) ?></span>
+                                            </div>
+                                        </td>
                                     </tr>
                                     <?php endwhile; ?>
                                 </tbody>
@@ -125,8 +170,14 @@ if (isset($_SESSION['user_token'])) {
                         <div class="px-6 py-4 border-t border-gray-700/50 flex justify-between items-center">
                             <span class="text-sm text-gray-400">Affichage des 50 derniers logs</span>
                             <div class="flex gap-2">
-                                <button class="bg-gray-700/50 hover:bg-gray-700/75 px-4 py-2 rounded-lg text-sm">Précédent</button>
-                                <button class="bg-gray-700/50 hover:bg-gray-700/75 px-4 py-2 rounded-lg text-sm">Suivant</button>
+                                <button class="pagination-btn hover:bg-gray-700/75 px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+                                    <i class="fas fa-chevron-left"></i>
+                                    Précédent
+                                </button>
+                                <button class="pagination-btn hover:bg-gray-700/75 px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+                                    Suivant
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -138,34 +189,53 @@ if (isset($_SESSION['user_token'])) {
 
 <script>
 function sortTable(columnIndex) {
-    const table = document.getElementById('logsTable')
-    const rows = Array.from(table.rows).slice(1)
-    const isAsc = table.getAttribute('data-sort-direction') === 'asc'
+    const table = document.getElementById('logsTable');
+    const rows = Array.from(table.rows).slice(1);
+    const isAsc = table.getAttribute('data-sort-direction') === 'asc';
     
+    // Ajout d'une animation de flèche
+    const th = table.querySelectorAll('th')[columnIndex];
+    table.querySelectorAll('th').forEach(header => {
+        header.querySelector('.sort-indicator')?.remove();
+    });
+    
+    const indicator = document.createElement('span');
+    indicator.className = 'sort-indicator ml-2';
+    indicator.innerHTML = isAsc ? '↑' : '↓';
+    th.appendChild(indicator);
+
     rows.sort((a, b) => {
-        const aValue = a.cells[columnIndex].textContent.trim()
-        const bValue = b.cells[columnIndex].textContent.trim()
+        const aValue = a.cells[columnIndex].textContent.trim();
+        const bValue = b.cells[columnIndex].textContent.trim();
         
         if (columnIndex === 1) {
-            return isAsc ? new Date(bValue) - new Date(aValue) : new Date(aValue) - new Date(bValue)
+            return isAsc ? new Date(bValue) - new Date(aValue) : new Date(aValue) - new Date(bValue);
         }
         
-        return isAsc ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue)
-    })
+        return isAsc ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+    });
     
-    table.tBodies[0].append(...rows)
-    table.setAttribute('data-sort-direction', isAsc ? 'desc' : 'asc')
+    table.tBodies[0].animate(
+        [{ opacity: 1 }, { opacity: 0 }, { opacity: 1 }],
+        { duration: 300 }
+    );
+    
+    setTimeout(() => {
+        table.tBodies[0].append(...rows);
+    }, 150);
+    
+    table.setAttribute('data-sort-direction', isAsc ? 'desc' : 'asc');
 }
 
 document.getElementById('searchInput').addEventListener('input', (e) => {
-    const searchValue = e.target.value.toLowerCase()
-    const rows = document.querySelectorAll('#logsTable tbody tr')
+    const searchValue = e.target.value.toLowerCase();
+    const rows = document.querySelectorAll('#logsTable tbody tr');
     
     rows.forEach(row => {
-        const text = row.textContent.toLowerCase()
-        row.style.display = text.includes(searchValue) ? '' : 'none'
-    })
-})
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchValue) ? '' : 'none';
+    });
+});
 </script>
 
 <?php require_once '../ui/footer.php'; ?>
