@@ -89,6 +89,14 @@ try {
         .type-Infrastructure { border-color: #8B5CF6; }
         .type-Performance { border-color: #10B981; }
         .type-Accessibility { border-color: #3B82F6; }
+        .update-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.9); z-index: 9999; display: none; align-items: center; justify-content: center; flex-direction: column; }
+        .update-content { background: #1e293b; border-radius: 12px; padding: 2rem; width: 90%; max-width: 500px; text-align: center; }
+        .progress-bar { background: #334155; height: 10px; border-radius: 5px; margin: 1rem 0; overflow: hidden; }
+        .progress { background: #3b82f6; height: 100%; width: 0%; transition: width 0.3s; }
+        .lds-ripple { display: inline-block; position: relative; width: 80px; height: 80px; }
+        .lds-ripple div { position: absolute; border: 4px solid #3b82f6; opacity: 1; border-radius: 50%; animation: lds-ripple 1s cubic-bezier(0, 0.2, 0.8, 1) infinite; }
+        .lds-ripple div:nth-child(2) { animation-delay: -0.5s; }
+        @keyframes lds-ripple { 0% { top: 36px; left: 36px; width: 0; height: 0; opacity: 0; } 4.9% { top: 36px; left: 36px; width: 0; height: 0; opacity: 0; } 5% { top: 36px; left: 36px; width: 0; height: 0; opacity: 1; } 100% { top: 0px; left: 0px; width: 72px; height: 72px; opacity: 0; } }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100">
@@ -102,6 +110,12 @@ try {
             </h1>
             
             <div class="flex space-x-4">
+                <?php if ($latestVersion && version_compare($currentVersion, $latestVersion, '<')): ?>
+                <button onclick="performUpdate()" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg flex items-center">
+                    <i class="bi bi-cloud-arrow-down mr-2"></i>
+                    Mettre à jour
+                </button>
+                <?php endif; ?>
                 <a href="javascript:history.back()" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg flex items-center">
                     <i class="bi bi-arrow-left mr-2"></i>
                     Retour
@@ -176,7 +190,7 @@ try {
                             </div>
                         </div>
                     <?php endforeach; ?>
-                </div>
+                    </div>
             <?php else: ?>
                 <div class="text-center py-8">
                     <i class="bi bi-journal-x text-4xl text-gray-500 mb-4"></i>
@@ -186,6 +200,74 @@ try {
         </div>
     </div>
 </div>
+
+<div class="update-overlay" id="updateOverlay">
+    <div class="update-content">
+        <div id="updatingContent">
+            <div class="lds-ripple"><div></div><div></div></div>
+            <h2 class="text-xl font-bold mb-2">Mise à jour en cours</h2>
+            <p class="text-gray-300 mb-4">Veuillez patienter, cela peut prendre quelques instants...</p>
+            <div class="progress-bar">
+                <div class="progress" id="updateProgress"></div>
+            </div>
+        </div>
+        <div id="updateComplete" style="display: none;">
+            <i class="bi bi-check-circle text-green-500 text-6xl mb-4"></i>
+            <h2 class="text-xl font-bold mb-2">Mise à jour terminée !</h2>
+            <p class="text-gray-300 mb-4">Le système va recharger automatiquement...</p>
+            <button onclick="location.reload()" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg">
+                Recharger maintenant
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+function performUpdate() {
+    const overlay = document.getElementById('updateOverlay');
+    const progressBar = document.getElementById('updateProgress');
+    const updatingContent = document.getElementById('updatingContent');
+    const updateComplete = document.getElementById('updateComplete');
+
+    overlay.style.display = 'flex';
+    
+    let progress = 0;
+    const interval = setInterval(() => {
+        progress += Math.random() * 20;
+        progressBar.style.width = Math.min(progress, 90) + '%';
+    }, 500);
+
+    fetch('/update/update.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'update_button=1'
+    })
+    .then(response => response.json())
+    .then(data => {
+        clearInterval(interval);
+        progressBar.style.width = '100%';
+        
+        if (data.success) {
+            updatingContent.style.display = 'none';
+            updateComplete.style.display = 'block';
+            setTimeout(() => {
+                location.reload();
+            }, 3000);
+        } else {
+            alert('Erreur lors de la mise à jour: ' + data.message);
+            overlay.style.display = 'none';
+        }
+    })
+    .catch(error => {
+        clearInterval(interval);
+        console.error('Erreur:', error);
+        alert('Une erreur est survenue lors de la mise à jour');
+        overlay.style.display = 'none';
+    });
+}
+</script>
 
 <?php include __DIR__.'/../../ui/footer.php'; ?>
 

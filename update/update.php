@@ -1,11 +1,14 @@
 <?php
 session_start();
 $configFilePath = '../conn.php';
+
 if (!file_exists($configFilePath)) {
     echo json_encode(['success' => false, 'message' => 'Fichier de configuration introuvable.']);
     exit();
 }
+
 require_once '../connexion_bdd.php';
+
 if (!isset($_SESSION['user_token']) || !isset($_SESSION['user_email'])) {
     echo json_encode(['success' => false, 'message' => 'Accès refusé. Veuillez vous connecter.']);
     exit();
@@ -22,7 +25,7 @@ function ajouter_log($user, $action) {
 }
 
 function getCurrentVersion() {
-    $versionFile = __DIR__ . '/../update/json/version.json';
+    $versionFile = __DIR__ . '/json/version.json';
     if (!file_exists($versionFile)) {
         throw new Exception('Fichier version.json introuvable.');
     }
@@ -35,7 +38,7 @@ function getCurrentVersion() {
 }
 
 function getUpdateInfo() {
-    $updateJsonPath = __DIR__ . '/../update/json/update.json';
+    $updateJsonPath = __DIR__ . '/json/update.json';
     if (!file_exists($updateJsonPath)) {
         throw new Exception('Fichier update.json introuvable.');
     }
@@ -100,7 +103,9 @@ function updateFiles() {
     $zip = new ZipArchive;
     if ($zip->open($zipFile) === TRUE) {
         $extractPath = './temp-update';
-        mkdir($extractPath);
+        if (!is_dir($extractPath)) {
+            mkdir($extractPath, 0755, true);
+        }
 
         $zip->extractTo($extractPath);
         $zip->close();
@@ -110,74 +115,78 @@ function updateFiles() {
         if (is_dir($innerFolder)) {
             foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($innerFolder, RecursiveDirectoryIterator::SKIP_DOTS)) as $file) {
                 $destination = str_replace("$innerFolder/", '../', $file->getPathname());
-                if ($file->isDir()) {
-                    mkdir($destination);
+                $destinationDir = dirname($destination);
+                
+                if (!is_dir($destinationDir)) {
+                    mkdir($destinationDir, 0755, true);
+                }
+
+                if (is_dir($file)) {
+                    if (!is_dir($destination)) {
+                        mkdir($destination, 0755);
+                    }
                 } else {
-                    rename($file->getPathname(), $destination);
+                    if (file_exists($destination)) {
+                        unlink($destination);
+                    }
+                    rename($file, $destination);
                 }
             }
-            deleteFolderRecursive($innerFolder);
+            deleteFolderRecursive($extractPath);
         }
-        deleteFolderRecursive($extractPath);
-
-        return true;
     } else {
-        throw new Exception('Échec de l\'ouverture du fichier ZIP.');
+        throw new Exception('Impossible d\'ouvrir le fichier ZIP.');
     }
 }
 
-function updateDatabase() {
-    global $pdo;
+header('Content-Type: application/json');
 
-    $sqlFilePath = __DIR__ . '/../utils/panel.sql';
-
-    if (!file_exists($sqlFilePath)) {
-        throw new Exception("Fichier panel.sql introuvable.");
-    }
-
-    try {
-        foreach (explode(';', file_get_contents($sqlFilePath)) as $query) {
-            if (trim($query)) {
-                $pdo->exec(trim($query));
-            }
-        }
-
-        return ['success' => true, 'message' => 'Base de données mise à jour avec succès.'];
-
-    } catch (Exception $e) {
-        return ['success' => false, 'message' => "Erreur lors de la mise à jour de la base de données : {$e->getMessage()}"];
-    }
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    try {
+try {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (isset($_POST['check_update'])) {
             $currentVersion = getCurrentVersion();
             $latestVersion = getLatestVersion();
+            $newVersionAvailable = isNewVersionAvailable($currentVersion, $latestVersion);
 
-            if (isNewVersionAvailable($currentVersion, $latestVersion)) {
-                echo json_encode(['success' => true, 'new_version_available' => true, 'current_version' => $currentVersion, 'latest_version' => $latestVersion]);
-            } else {
-                echo json_encode(['success' => true, 'new_version_available' => false, 'current_version' => $currentVersion]);
-            }
-        } elseif (isset($_POST['update_button'])) {
-            updateFiles();
-            updateDatabase();
-
-            file_put_contents(__DIR__ . '/../update/version.json', json_encode(['version' => getLatestVersion()], JSON_PRETTY_PRINT));
-
-            ajouter_log($_SESSION['user_email'], "Mise à jour effectuée.");
-
-            echo json_encode(['success' => true, 'message' => "Mise à jour effectuée avec succès."]);
-        } else {
-            echo json_encode(['success' => false, 'message' => 'Requête non valide.']);
+            echo json_encode([
+                'success' => true,
+                'new_version_available' => $newVersionAvailable,
+                'current_version' => $currentVersion,
+                'latest_version' => $latestVersion
+            ]);
+            exit();
         }
 
-    } catch (Exception $e) {
-        echo json_encode(['success' => false, 'message' => "Erreur : {$e->getMessage()}"]);
-
+        if (isset($_POST['update_button'])) {
+            updateFiles();
+            
+            $currentVersion = getCurrentVersion();
+            $latestVersion = getLatestVersion();
+            
+            if (!isNewVersionAvailable($currentVersion, $latestVersion)) {
+                ajouter_log($_SESSION['user_email'], "Mise à jour réussie vers la version $latestVersion");
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Mise à jour terminée avec succès.',
+                    'new_version' => $latestVersion
+                ]);
+            } else {
+                throw new Exception('La mise à jour semble avoir échoué. La version actuelle n\'a pas été mise à jour.');
+            }
+            exit();
+        }
     }
-} else {
-    echo json_encode(['success' => false, 'message' => 'Requête non valide.']);
+} catch (Exception $e) {
+    ajouter_log($_SESSION['user_email'], "Échec de la mise à jour : " . $e->getMessage());
+    echo json_encode([
+        'success' => false,
+        'message' => $e->getMessage()
+    ]);
+    exit();
 }
-?>
+
+echo json_encode([
+    'success' => false,
+    'message' => 'Action non reconnue.'
+]);
+exit();

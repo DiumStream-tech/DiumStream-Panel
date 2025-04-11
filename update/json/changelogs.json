@@ -1,18 +1,13 @@
 {
     "versions": [
         {
-            "version": "0.2.3",
-            "date": "07-04-2025",
+            "version": "0.2.4",
+            "date": "11-04-2025",
             "changes": [
                 {
-                    "type": "Added",
-                    "title": "Added Export logs système",
-                    "description": "Ajoute d'un système d'export logs"
-                },
-                {
-                    "type": "Added",
-                    "title": "Added des permissions",
-                    "description": "Added la permission logs_export est purge_logs pour les user"
+                    "type": "Improved",
+                    "title": "Improved Modification",
+                    "description": "Modification du système de update sa serait plus un overlays mais un boutton qui se affiche sur la pages update/ui/system"
                 }
             ]
         }
