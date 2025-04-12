@@ -1,13 +1,13 @@
 {
     "versions": [
         {
-            "version": "0.2.4",
+            "version": "0.2.5",
             "date": "11-04-2025",
             "changes": [
                 {
-                    "type": "Improved",
-                    "title": "Improved Modification",
-                    "description": "Modification du système de update sa serait plus un overlays mais un boutton qui se affiche sur la pages update/ui/system"
+                    "type": "Added",
+                    "title": "Added Perms Update",
+                    "description": "Added de la perms Update Buttons"
                 }
             ]
         }

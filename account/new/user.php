@@ -308,6 +308,11 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     class="form-checkbox h-5 w-5 text-indigo-600 border-2 border-[#4a525d] rounded focus:ring-indigo-500">
                                 <span class="text-gray-300">Exporter/Importer</span>
                             </label>
+                            <label class="flex items-center space-x-3 hover:bg-[#4a525d]/50 p-2 rounded-lg transition-all">
+                                <input type="checkbox" name="permissions[]" value="update_buttons"
+                                    class="form-checkbox h-5 w-5 text-indigo-600 border-2 border-[#4a525d] rounded focus:ring-indigo-500">
+                                <span class="text-gray-300">Update buttons</span>
+                            </label>
                         </div>
                     </div>
 
@@ -476,6 +481,11 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     class="form-checkbox h-5 w-5 text-indigo-600 border-2 border-[#4a525d] rounded focus:ring-indigo-500">
                                 <span class="text-gray-300">Exporter/Importer</span>
                             </label>
+                            <label class="flex items-center space-x-3 hover:bg-[#4a525d]/50 p-2 rounded-lg transition-all">
+                                <input type="checkbox" name="permissions[]" value="update_buttons" id="perm_update_buttons"
+                                    class="form-checkbox h-5 w-5 text-indigo-600 border-2 border-[#4a525d] rounded focus:ring-indigo-500">
+                                <span class="text-gray-300">Update buttons</span>
+                            </label>
                         </div>
 
                         <div class="flex justify-end space-x-3 mt-6">
@@ -515,6 +525,7 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     document.getElementById('perm_file_access').checked = permArray.includes('file_access');
                     document.getElementById('perm_register_users').checked = permArray.includes('register_users');
                     document.getElementById('perm_export_import').checked = permArray.includes('export_import');
+                    document.getElementById('perm_update_buttons').checked = permArray.includes('update_buttons');
                     
                     document.getElementById('changePermissionsOverlay').classList.remove('hidden');
                     document.getElementById('changePermissionsOverlay').classList.add('flex');

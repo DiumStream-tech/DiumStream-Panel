@@ -7,6 +7,23 @@ if (!isset($_SESSION['user_token']) || !isset($_SESSION['user_email'])) {
     exit();
 }
 
+if (isset($_SESSION['user_token'])) {
+    $stmt = $pdo->prepare("SELECT * FROM users WHERE token = :token");
+    $stmt->execute([':token' => $_SESSION['user_token']]);
+    $utilisateur = $stmt->fetch();
+
+    if (!$utilisateur) {
+        header('Location: ../../login.php');
+        exit();
+    }
+}
+
+function hasPermission($user, $permission) {
+    if ($user['permissions'] === '*') return true;
+    $userPermissions = explode(',', $user['permissions']);
+    return in_array($permission, $userPermissions);
+}
+
 function getUpdateInfo() {
     $updateJsonPath = __DIR__ . '/../json/update.json';
     if (!file_exists($updateJsonPath)) {
@@ -65,7 +82,6 @@ try {
     $error = $e->getMessage();
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -111,10 +127,17 @@ try {
             
             <div class="flex space-x-4">
                 <?php if ($latestVersion && version_compare($currentVersion, $latestVersion, '<')): ?>
+                <?php if (hasPermission($utilisateur, 'update_buttons')): ?>
                 <button onclick="performUpdate()" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg flex items-center">
                     <i class="bi bi-cloud-arrow-down mr-2"></i>
                     Mettre à jour
                 </button>
+                <?php else: ?>
+                <button class="bg-gray-700 text-gray-400 cursor-not-allowed px-4 py-2 rounded-lg flex items-center" title="Permission refusée" disabled>
+                    <i class="bi bi-cloud-slash mr-2"></i>
+                    Mettre à jour
+                </button>
+                <?php endif; ?>
                 <?php endif; ?>
                 <a href="javascript:history.back()" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg flex items-center">
                     <i class="bi bi-arrow-left mr-2"></i>
@@ -191,7 +214,7 @@ try {
                         </div>
                     <?php endforeach; ?>
                     </div>
-            <?php else: ?>
+                    <?php else: ?>
                 <div class="text-center py-8">
                     <i class="bi bi-journal-x text-4xl text-gray-500 mb-4"></i>
                     <p class="text-gray-400">Aucune donnée d'historique disponible</p>
@@ -211,12 +234,23 @@ try {
                 <div class="progress" id="updateProgress"></div>
             </div>
         </div>
+        
         <div id="updateComplete" style="display: none;">
             <i class="bi bi-check-circle text-green-500 text-6xl mb-4"></i>
             <h2 class="text-xl font-bold mb-2">Mise à jour terminée !</h2>
             <p class="text-gray-300 mb-4">Le système va recharger automatiquement...</p>
             <button onclick="location.reload()" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg">
                 Recharger maintenant
+            </button>
+        </div>
+        
+        <div id="updateError" class="update-content" style="display: none;">
+            <i class="bi bi-x-circle text-red-500 text-6xl mb-4"></i>
+            <h2 class="text-xl font-bold mb-2">Erreur de mise à jour</h2>
+            <p class="text-gray-300 mb-4" id="errorMessage"></p>
+            <button onclick="document.getElementById('updateOverlay').style.display='none'" 
+                    class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg">
+                Fermer
             </button>
         </div>
     </div>
@@ -228,8 +262,14 @@ function performUpdate() {
     const progressBar = document.getElementById('updateProgress');
     const updatingContent = document.getElementById('updatingContent');
     const updateComplete = document.getElementById('updateComplete');
+    const updateError = document.getElementById('updateError');
+    const errorMessage = document.getElementById('errorMessage');
 
     overlay.style.display = 'flex';
+    updatingContent.style.display = 'block';
+    updateComplete.style.display = 'none';
+    updateError.style.display = 'none';
+    progressBar.style.width = '0%';
     
     let progress = 0;
     const interval = setInterval(() => {
@@ -256,15 +296,16 @@ function performUpdate() {
                 location.reload();
             }, 3000);
         } else {
-            alert('Erreur lors de la mise à jour: ' + data.message);
-            overlay.style.display = 'none';
+            updatingContent.style.display = 'none';
+            updateError.style.display = 'block';
+            errorMessage.textContent = data.message || 'Une erreur inconnue est survenue';
         }
     })
     .catch(error => {
         clearInterval(interval);
-        console.error('Erreur:', error);
-        alert('Une erreur est survenue lors de la mise à jour');
-        overlay.style.display = 'none';
+        updatingContent.style.display = 'none';
+        updateError.style.display = 'block';
+        errorMessage.textContent = 'Erreur réseau : ' + error.message;
     });
 }
 </script>

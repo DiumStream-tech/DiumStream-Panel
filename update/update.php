@@ -14,6 +14,26 @@ if (!isset($_SESSION['user_token']) || !isset($_SESSION['user_email'])) {
     exit();
 }
 
+if (isset($_SESSION['user_token'])) {
+    $stmt = $pdo->prepare("SELECT * FROM users WHERE token = :token");
+    $stmt->execute([':token' => $_SESSION['user_token']]);
+    $user = $stmt->fetch();
+
+    if (!$user) {
+        die(json_encode(['success' => false, 'message' => 'Utilisateur non trouvé']));
+    }
+
+    function hasPermission($user, $permission) {
+        if ($user['permissions'] === '*') return true;
+        $userPermissions = explode(',', $user['permissions']);
+        return in_array($permission, $userPermissions);
+    }
+
+    if (!hasPermission($user, 'update')) {
+        die(json_encode(['success' => false, 'message' => 'Permission refusée']));
+    }
+}
+
 function ajouter_log($user, $action) {
     global $pdo;
     $stmt = $pdo->prepare("INSERT INTO logs (user, timestamp, action) VALUES (:user, :timestamp, :action)");
@@ -132,7 +152,10 @@ function updateFiles() {
                     rename($file, $destination);
                 }
             }
+            
+            // Suppression améliorée du dossier temporaire
             deleteFolderRecursive($extractPath);
+            rmdir($extractPath);
         }
     } else {
         throw new Exception('Impossible d\'ouvrir le fichier ZIP.');
