@@ -48,9 +48,11 @@ $configFilePath = './conn.php';
                             $dbname = $_POST['dbname'];
                             $username = $_POST['username'];
                             $password = $_POST['password'];
+                            $webhookUrl = $_POST['webhook_url'];
 
                             try {
                                 $pdo = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
+
                                 $configContent = <<<EOT
 <?php
 
@@ -61,12 +63,20 @@ $configFilePath = './conn.php';
     'password' => '$password',
 ];
 
+\$webhookConfig = [
+    'url' => '$webhookUrl',
+];
+
 ?>
 EOT;
+
                                 file_put_contents($configFilePath, $configContent);
+
+                                // Exécuter le fichier SQL pour initialiser la base de données
                                 $sqlFile = 'utils/panel.sql';
                                 $sqlCommands = file_get_contents($sqlFile);
                                 $pdo->exec($sqlCommands);
+
                                 header('Location: account/register');
                                 exit();
                             } catch (PDOException $e) {
@@ -117,13 +127,24 @@ EOT;
                                 </div>
                             </div>
 
+                            <div>
+                                <label class="block text-sm font-medium text-gray-400 mb-2">Webhook Discord</label>
+                                <div class="relative">
+                                    <input type="text" name="webhook_url" required
+                                        class="input-text-black w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                        placeholder="https://discord.com/api/webhooks/...">
+                                    <i class="bi bi-link absolute right-4 top-3.5 text-gray-500"></i>
+                                </div>
+                            </div>
+
                             <button type="submit" 
                                 class="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-lg font-semibold transition-all duration-300">
                                 Configurer la base de données
                                 <i class="bi bi-arrow-right-circle ml-2"></i>
                             </button>
-                        </form>
+                            </form>
                     <?php else : ?>
+                        <!-- Message si la configuration est déjà effectuée -->
                         <div class="text-center py-8">
                             <div class="animate-bounce mb-6">
                                 <i class="bi bi-check-circle-fill text-6xl text-green-400"></i>

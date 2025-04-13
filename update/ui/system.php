@@ -3,7 +3,7 @@ session_start();
 require_once __DIR__.'/../../connexion_bdd.php';
 
 if (!isset($_SESSION['user_token']) || !isset($_SESSION['user_email'])) {
-    header('Location: ../../login.php');
+    header('Location: ../../account/connexion.php');
     exit();
 }
 
@@ -13,7 +13,7 @@ if (isset($_SESSION['user_token'])) {
     $utilisateur = $stmt->fetch();
 
     if (!$utilisateur) {
-        header('Location: ../../login.php');
+        header('Location: ../../account/connexion.php');
         exit();
     }
 }

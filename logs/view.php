@@ -35,11 +35,9 @@ if (isset($_SESSION['user_token'])) {
     exit();
 }
 
-// Vérification des logs existants
 $stmtCheck = $pdo->query("SELECT COUNT(*) as count FROM logs");
 $logCount = $stmtCheck->fetch(PDO::FETCH_ASSOC)['count'];
 
-// Gestion des exports
 if (isset($_POST['export_file'])) {
     if (!hasPermission($utilisateur, 'logs_export')) {
         error_log('Tentative d\'export CSV non autorisée par '.$utilisateur['username']);
@@ -83,11 +81,18 @@ if (isset($_POST['export_discord'])) {
         exit();
     }
 
-    // Récupération des logs
+    require_once '../conn.php';
+    
+    if (!isset($webhookConfig['url']) || empty($webhookConfig['url'])) {
+        echo "<script>alert('Webhook Discord non configuré')</script>";
+        exit();
+    }
+
+    $webhookUrl = $webhookConfig['url'];
+
     $stmt = $pdo->query("SELECT * FROM logs ORDER BY timestamp DESC");
     $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Préparation des données pour l'embed
     $embeds = [];
     $currentMessage = "**📜 Export des logs - ".date('d/m/Y H:i')."**\n";
     
@@ -125,9 +130,6 @@ if (isset($_POST['export_discord'])) {
         ];
     }
 
-    // Configuration du webhook
-    $webhookUrl = 'https://discord.com/api/webhooks/1358751540063633561/-KYN13ZAFXSMeoSA2R_KMOZL2aIWa9PAniCuJCvbHwi0xWLEdq0i97Jc-mAVZwpZA7pX';
-    
     $chunks = array_chunk($embeds, 10);
     
     foreach ($chunks as $chunk) {
