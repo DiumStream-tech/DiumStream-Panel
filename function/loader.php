@@ -20,6 +20,7 @@
                         <option value="forge" <?php if ($row['loader_type'] == 'forge') echo 'selected'; ?>>Forge</option>
                         <option value="fabric" <?php if ($row['loader_type'] == 'fabric') echo 'selected'; ?>>Fabric</option>
                         <option value="neoforge" <?php if ($row['loader_type'] == 'neoforge') echo 'selected'; ?>>NeoForge</option>
+                        <option value="quilt" <?php if ($row['loader_type'] == 'quilt') echo 'selected'; ?>>Quilt</option>
                     </select>
                 </div>
 
@@ -68,7 +69,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function fetchLoaderBuildVersions(loaderType, mcVersion) {
         const apiUrl = `function/loader_api.php?loader=${loaderType}&mc_version=${mcVersion}`;
-        
         fetch(apiUrl)
             .then(response => response.json())
             .then(data => {
@@ -78,8 +78,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     fetchLoaderBuildVersions(loaderType, data.suggested_version);
                     return;
                 }
-                
-                if (data.status === 'success') {
+                if (data.status === 'success' || data.status === 'warning') {
                     updateLoaderBuildVersions(data.builds, loaderType);
                 } else {
                     console.error('Erreur API:', data.message);
@@ -92,20 +91,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function updateLoaderBuildVersions(builds, loaderType) {
         loaderBuildVersionSelect.innerHTML = '';
-
         builds.forEach(build => {
             const option = document.createElement('option');
             option.value = build;
             option.textContent = build;
-
             if (loaderType === 'forge' && build === loaderForgeVersion) {
                 option.selected = true;
             }
-
             loaderBuildVersionSelect.appendChild(option);
         });
 
-        if (['forge', 'fabric', 'neoforge'].includes(loaderType)) {
+        if (['forge', 'fabric', 'neoforge', 'quilt'].includes(loaderType)) {
             loaderBuildVersionSelect.style.display = 'block';
             loaderBuildVersionInput.style.display = 'none';
         } else {
@@ -119,10 +115,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const currentVersion = mcVersionInput.value;
 
         if (loaderType === 'neoforge' && versionCompare(currentVersion, '1.20.2') < 0) {
-            mcVersionInput.value = '1.21.5';
+            mcVersionInput.value = '1.21.8';
         }
         if (loaderType === 'fabric' && versionCompare(currentVersion, '1.14') < 0) {
-            mcVersionInput.value = '1.21.5';
+            mcVersionInput.value = '1.21.8';
+        }
+        if (loaderType === 'quilt' && versionCompare(currentVersion, '1.17') < 0) {
+            mcVersionInput.value = '1.21.8';
         }
 
         fetchLoaderBuildVersions(loaderType, mcVersionInput.value);
@@ -135,15 +134,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const initialLoaderType = loaderTypeSelect.value;
     const initialMcVersion = mcVersionInput.value;
-    
+
     if (initialLoaderType && initialMcVersion) {
         if (initialLoaderType === 'neoforge' && versionCompare(initialMcVersion, '1.20.2') < 0) {
-            mcVersionInput.value = '1.21.5';
+            mcVersionInput.value = '1.21.8';
         }
         if (initialLoaderType === 'fabric' && versionCompare(initialMcVersion, '1.14') < 0) {
-            mcVersionInput.value = '1.21.5';
+            mcVersionInput.value = '1.21.8';
         }
-
+        if (initialLoaderType === 'quilt' && versionCompare(initialMcVersion, '1.17') < 0) {
+            mcVersionInput.value = '1.21.8';
+        }
         fetchLoaderBuildVersions(initialLoaderType, mcVersionInput.value);
     }
 });

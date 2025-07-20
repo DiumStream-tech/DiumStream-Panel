@@ -46,83 +46,66 @@ $errors = [];
 $show_2fa_form = false;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['email']) && isset($_POST['password'])) {
-        $email = $_POST['email'];
-        $password = $_POST['password'];
+    $email = trim($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
 
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $errors[] = "Adresse email invalide.";
-        }
+    $stmt = $pdo->prepare("SELECT * FROM users WHERE email = :email");
+    $stmt->execute([':email' => $email]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if (empty($password)) {
-            $errors[] = "Veuillez saisir votre mot de passe.";
-        }
+    if ($user && password_verify($password, $user['password'])) {
+        if ($user['two_factor_enabled']) {
+            // Protection brute-force 2FA
+            $maxAttempts = 5;
+            $blockDuration = 300; // 5 minutes
+            $attemptKey = '2fa_attempts_' . $user['id'];
+            $blockKey = '2fa_block_' . $user['id'];
 
-        if (empty($errors)) {
-            try {
-                $sth = $pdo->prepare("SELECT * FROM users WHERE email = :email");
-                $sth->execute(['email' => $email]);
+            if (!isset($_SESSION[$attemptKey])) $_SESSION[$attemptKey] = 0;
+            if (!isset($_SESSION[$blockKey])) $_SESSION[$blockKey] = 0;
 
-                if ($sth->rowCount() === 0) {
-                    $errors[] = "Adresse email ou mot de passe incorrect.";
+            if ($_SESSION[$blockKey] > time()) {
+                $errors[] = "Trop de tentatives. Réessayez dans " . ($_SESSION[$blockKey] - time()) . " secondes.";
+            } else {
+                if (!isset($_POST['code'])) {
+                    $_SESSION['pending_2fa_user'] = $user['id'];
+                    echo '<form method="post">';
+                    echo '<input type="hidden" name="email" value="'.htmlspecialchars($email).'">';
+                    echo '<input type="hidden" name="password" value="'.htmlspecialchars($password).'">';
+                    echo '<label>Code 2FA :</label> <input type="text" name="code" required>';
+                    echo '<button type="submit">Valider</button>';
+                    echo '</form>';
+                    exit;
                 } else {
-                    $user = $sth->fetch();
-
-                    if (!password_verify($password, $user['password'])) {
-                        $errors[] = "Adresse email ou mot de passe incorrect.";
-                    } else {
-                        if ($user['two_factor_secret']) {
-                            $_SESSION['temp_user_id'] = $user['id'];
-                            $show_2fa_form = true;
+                    $tfa = new TwoFactorAuth('VotrePanel');
+                    $code = trim($_POST['code']);
+                    if (!$tfa->verifyCode($user['two_factor_secret'], $code)) {
+                        $_SESSION[$attemptKey]++;
+                        if ($_SESSION[$attemptKey] >= $maxAttempts) {
+                            $_SESSION[$blockKey] = time() + $blockDuration;
+                            $errors[] = "Trop de tentatives. Réessayez dans $blockDuration secondes.";
                         } else {
-                            $token = generateToken();
-                            $_SESSION['user_email'] = $email;
-                            $_SESSION['user_token'] = $token;
-
-                            $stmt = $pdo->prepare("UPDATE users SET token = :token WHERE email = :email");
-                            $stmt->bindParam(':token', $token);
-                            $stmt->bindParam(':email', $email);
-                            $stmt->execute();
-
-                            ajouter_log($email, "Connexion réussie");
-
-                            header('Location: ../settings');
-                            exit();
+                            $errors[] = "Code 2FA invalide. Tentative " . $_SESSION[$attemptKey] . "/$maxAttempts.";
                         }
+                    } else {
+                        // Connexion réussie
+                        $_SESSION[$attemptKey] = 0;
+                        $_SESSION[$blockKey] = 0;
+                        $_SESSION['user_token'] = $user['token'];
+                        $_SESSION['user_email'] = $user['email'];
+                        header('Location: ../settings');
+                        exit;
                     }
                 }
-            } catch (PDOException $e) {
-                echo "Erreur de connexion à la base de données: " . $e->getMessage();
-                exit();
             }
-        }
-    } elseif (isset($_POST['2fa_code'])) {
-        $code = $_POST['2fa_code'];
-        
-        $stmt = $pdo->prepare("SELECT * FROM users WHERE id = :id");
-        $stmt->execute(['id' => $_SESSION['temp_user_id']]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        $tfa = new TwoFactorAuth('Panel Launcher');
-        if ($tfa->verifyCode($user['two_factor_secret'], $code)) {
-            $token = generateToken();
-            $_SESSION['user_email'] = $user['email'];
-            $_SESSION['user_token'] = $token;
-
-            $stmt = $pdo->prepare("UPDATE users SET token = :token WHERE id = :id");
-            $stmt->bindParam(':token', $token);
-            $stmt->bindParam(':id', $user['id']);
-            $stmt->execute();
-
-            ajouter_log($user['email'], "Connexion réussie avec 2FA");
-
-            unset($_SESSION['temp_user_id']);
-            header('Location: ../settings');
-            exit();
         } else {
-            $errors[] = "Code 2FA incorrect.";
-            $show_2fa_form = true;
+            $_SESSION['user_token'] = $user['token'];
+            $_SESSION['user_email'] = $user['email'];
+            header('Location: ../settings');
+            exit;
         }
+    } else {
+        $errors[] = "Identifiants invalides.";
     }
 }
 ?>
@@ -149,12 +132,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .form-input:focus {
             box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
         }
-        /* Style personnalisé pour le texte saisi */
         .input-text-black {
             color: #000 !important;
         }
         .input-text-black::placeholder {
-            color: #6b7280 !important; /* Gris Tailwind-500 */
+            color: #6b7280 !important;
         }
     </style>
 </head>
@@ -238,6 +220,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 
+    <?php require_once '../ui/footer.php'; ?>
+
+    <script>
+        const togglePassword = document.querySelector('#togglePassword');
+        const password = document.querySelector('#password');
+
+        togglePassword.addEventListener('click', function () {
+            const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+            password.setAttribute('type', type);
+            this.classList.toggle('bi-eye-slash-fill');
+            this.classList.toggle('bi-eye-fill');
+        });
+    </script>
+</body>
+</html>
     <?php require_once '../ui/footer.php'; ?>
 
     <script>

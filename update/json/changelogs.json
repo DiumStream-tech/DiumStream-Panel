@@ -1,18 +1,28 @@
 {
     "versions": [
         {
-            "version": "0.2.6",
-            "date": "13-04-2025",
+            "version": "0.2.7",
+            "date": "20-07-2025",
             "changes": [
                 {
-                    "type": "Fixed",
-                    "title": "Fixed Perms Update",
-                    "description": "Fixed des retoure à la pages de connextions si déconneter"
+                    "type": "type-Added",
+                    "title": "Added Button / Version",
+                    "description": "Ajoute d'un buttons pour désativer la 2fa de puis la pages de getsion des utilisateurs."
                 },
                 {
-                    "type": "Added",
-                    "title": "Added Setdb Webhook logs",
-                    "description": "Added de la configurations du webhook pour export les logs"
+                    "type": "type-Added",
+                    "title": "Version 1.21.8",
+                    "description": "Ajoute la version 1.21.8 Minecraft + ajoute du support Quilt."
+                },
+                {
+                    "type": "type-Fixed",
+                    "title": "Fixed Bugs est failles de sécurité",
+                    "description": "Correction de plusieurs bugs et failles de sécurité."
+                },
+                {
+                    "type": "type-UI-UX",
+                    "title": "UI/UX Improvements",
+                    "description": "Amélioration de l'interface de gestion des utilisateurs pour l'affichage des permissions."
                 }
             ]
         }

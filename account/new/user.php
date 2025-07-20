@@ -149,6 +149,13 @@ if (isset($_POST['change_permissions'])) {
     }
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['disable_2fa_user_id'])) {
+    $userId = intval($_POST['disable_2fa_user_id']);
+    $stmt = $pdo->prepare("UPDATE users SET two_factor_enabled = 0, two_factor_secret = NULL WHERE id = ?");
+    $stmt->execute([$userId]);
+    $success = "2FA désactivée pour l'utilisateur ID $userId";
+}
+
 $query = "SELECT id, email, permissions FROM users";
 if ($utilisateur['permissions'] !== '*') {
     $query .= " WHERE permissions != '*'";
@@ -156,6 +163,9 @@ if ($utilisateur['permissions'] !== '*') {
 $stmt = $pdo->prepare($query);
 $stmt->execute();
 $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$stmt = $pdo->query("SELECT id, email, two_factor_enabled FROM users");
+$users2fa = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!DOCTYPE html>
 <html lang="fr" data-bs-theme="dark">
@@ -274,44 +284,45 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <label class="block text-sm font-medium text-gray-300 mb-4">Permissions</label>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <label class="flex items-center space-x-3 hover:bg-[#4a525d]/50 p-2 rounded-lg transition-all">
-                                <input type="checkbox" name="permissions[]" value="logs_view"
+                                <input type="checkbox" name="permissions[]" value="logs_view" id="perm_logs_view_create"
                                     class="form-checkbox h-5 w-5 text-indigo-600 border-2 border-[#4a525d] rounded focus:ring-indigo-500">
                                 <span class="text-gray-300">Voir les logs</span>
                             </label>
 
                             <label class="flex items-center space-x-3 hover:bg-[#4a525d]/50 p-2 rounded-lg transition-all">
-                                <input type="checkbox" name="permissions[]" value="purge_logs"
+                                <input type="checkbox" name="permissions[]" value="purge_logs" id="perm_purge_logs_create"
                                     class="form-checkbox h-5 w-5 text-indigo-600 border-2 border-[#4a525d] rounded focus:ring-indigo-500">
                                 <span class="text-gray-300">Purger les logs</span>
                             </label>
 
-                            <label class="flex items-center space-x-3 hover:bg-[#3b424b]/50 p-2 rounded-lg transition-all">
-                                <input type="checkbox" name="permissions[]" value="logs_export"
+                            <label class="flex items-center space-x-3 hover:bg-[#4a525d]/50 p-2 rounded-lg transition-all">
+                                <input type="checkbox" name="permissions[]" value="logs_export" id="perm_logs_export_create"
                                     class="form-checkbox h-5 w-5 text-indigo-600 border-2 border-[#4a525d] rounded focus:ring-indigo-500">
                                 <span class="text-gray-300">Export Logs</span>
                             </label>
 
                             <label class="flex items-center space-x-3 hover:bg-[#4a525d]/50 p-2 rounded-lg transition-all">
-                                <input type="checkbox" name="permissions[]" value="file_access"
+                                <input type="checkbox" name="permissions[]" value="file_access" id="perm_file_access_create"
                                     class="form-checkbox h-5 w-5 text-indigo-600 border-2 border-[#4a525d] rounded focus:ring-indigo-500">
                                 <span class="text-gray-300">Accès aux fichiers</span>
                             </label>
 
                             <label class="flex items-center space-x-3 hover:bg-[#4a525d]/50 p-2 rounded-lg transition-all">
-                                <input type="checkbox" name="permissions[]" value="register_users"
+                                <input type="checkbox" name="permissions[]" value="register_users" id="perm_register_users_create"
                                     class="form-checkbox h-5 w-5 text-indigo-600 border-2 border-[#4a525d] rounded focus:ring-indigo-500">
                                 <span class="text-gray-300">Créer des utilisateurs</span>
                             </label>
 
                             <label class="flex items-center space-x-3 hover:bg-[#4a525d]/50 p-2 rounded-lg transition-all">
-                                <input type="checkbox" name="permissions[]" value="export_import"
+                                <input type="checkbox" name="permissions[]" value="delete_users" id="perm_delete_users_create"
+                                    class="form-checkbox h-5 w-5 text-indigo-600 border-2 border-[#4a525d] rounded focus:ring-indigo-500">
+                                <span class="text-gray-300">Supprimer des utilisateurs</span>
+                            </label>
+
+                            <label class="flex items-center space-x-3 hover:bg-[#4a525d]/50 p-2 rounded-lg transition-all">
+                                <input type="checkbox" name="permissions[]" value="export_import" id="perm_export_import_create"
                                     class="form-checkbox h-5 w-5 text-indigo-600 border-2 border-[#4a525d] rounded focus:ring-indigo-500">
                                 <span class="text-gray-300">Exporter/Importer</span>
-                            </label>
-                            <label class="flex items-center space-x-3 hover:bg-[#4a525d]/50 p-2 rounded-lg transition-all">
-                                <input type="checkbox" name="permissions[]" value="update_buttons"
-                                    class="form-checkbox h-5 w-5 text-indigo-600 border-2 border-[#4a525d] rounded focus:ring-indigo-500">
-                                <span class="text-gray-300">Update buttons</span>
                             </label>
                         </div>
                     </div>
@@ -329,61 +340,91 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 </h2>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <?php foreach ($users as $user) : ?>
-                        <?php if ($user['id'] != 1) : ?>
-                        <div class="bg-[#3b424b]/50 hover:bg-[#3b424b]/70 rounded-xl p-4 transition-all duration-200">
-                            <div class="flex items-center justify-between mb-3">
-                                <h3 class="text-lg font-semibold text-gray-100">
-                                    <?php echo htmlspecialchars($user['email']); ?>
-                                </h3>
-                                <?php if ($user['permissions'] === '*') : ?>
-                                    <span class="bg-yellow-500/20 text-yellow-400 text-sm px-3 py-1 rounded-full">Admin</span>
-                                <?php endif; ?>
-                            </div>
+                    <?php foreach ($users as $user) : 
+    // Vérifier l'état 2FA via la colonne two_factor_enabled de la table users
+    $twofa_enabled = 0;
+    foreach ($users2fa as $u2fa) {
+        if ($u2fa['id'] == $user['id']) {
+            $twofa_enabled = intval($u2fa['two_factor_enabled']);
+            break;
+        }
+    }
+?>
+    <div class="bg-[#3b424b]/50 hover:bg-[#3b424b]/70 rounded-xl p-4 transition-all duration-200">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="text-lg font-semibold text-gray-100">
+                <?php echo htmlspecialchars($user['email']); ?>
+            </h3>
+            <?php if ($user['permissions'] === '*') : ?>
+                <span class="bg-yellow-500/20 text-yellow-400 text-sm px-3 py-1 rounded-full">Admin</span>
+            <?php endif; ?>
+        </div>
 
-                            <div class="text-sm text-gray-300 mb-4">
-                                <div class="flex items-center space-x-2 mb-3">
-                                    <i class="bi bi-shield-lock"></i>
-                                    <span>Permissions :</span>
-                                </div>
-                                <div class="flex flex-wrap gap-2">
-                                    <?php 
-                                    $permissions = $user['permissions'] === '*' ? ['*'] : explode(',', $user['permissions']);
-                                    foreach ($permissions as $perm) :
-                                        $colorClass = $perm === '*' ? 'bg-purple-500/20 text-purple-400' : 'bg-[#4a525d] text-gray-200';
-                                    ?>
-                                        <span class="text-xs px-3 py-1 rounded-full <?php echo $colorClass; ?>">
-                                            <?php echo htmlspecialchars($perm); ?>
-                                        </span>
-                                    <?php endforeach; ?>
-                                </div>
-                            </div>
+        <div class="text-sm text-gray-300 mb-4">
+            <div class="flex items-center space-x-2 mb-3">
+                <i class="bi bi-shield-lock"></i>
+                <span>Permissions :</span>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <?php 
+                $permissions = $user['permissions'] === '*' ? ['*'] : explode(',', $user['permissions']);
+                $permLabels = [
+                    'logs_view' => ['label' => 'Voir les logs', 'icon' => 'bi-eye', 'color' => 'bg-blue-700/30 text-blue-300 border-blue-500'],
+                    'purge_logs' => ['label' => 'Purger les logs', 'icon' => 'bi-trash', 'color' => 'bg-red-700/30 text-red-300 border-red-500'],
+                    'logs_export' => ['label' => 'Export Logs', 'icon' => 'bi-download', 'color' => 'bg-green-700/30 text-green-300 border-green-500'],
+                    'file_access' => ['label' => 'Accès fichiers', 'icon' => 'bi-folder2-open', 'color' => 'bg-yellow-700/30 text-yellow-200 border-yellow-500'],
+                    'register_users' => ['label' => 'Créer utilisateurs', 'icon' => 'bi-person-plus', 'color' => 'bg-indigo-700/30 text-indigo-200 border-indigo-500'],
+                    'delete_users' => ['label' => 'Supprimer utilisateurs', 'icon' => 'bi-person-x', 'color' => 'bg-pink-700/30 text-pink-200 border-pink-500'],
+                    'export_import' => ['label' => 'Exporter/Importer', 'icon' => 'bi-arrow-left-right', 'color' => 'bg-purple-700/30 text-purple-200 border-purple-500'],
+                    '*' => ['label' => 'Toutes', 'icon' => 'bi-stars', 'color' => 'bg-purple-900/40 text-purple-300 border-purple-600'],
+                ];
+                foreach ($permissions as $perm) :
+                    $meta = $permLabels[$perm] ?? ['label' => $perm, 'icon' => 'bi-shield', 'color' => 'bg-gray-700/30 text-gray-200 border-gray-500'];
+                ?>
+                    <span class="flex items-center gap-1 text-xs px-3 py-1 rounded-full border <?php echo $meta['color']; ?>">
+                        <i class="bi <?php echo $meta['icon']; ?>"></i>
+                        <?php echo htmlspecialchars($meta['label']); ?>
+                    </span>
+                <?php endforeach; ?>
+            </div>
+        </div>
 
-                            <?php if ($user['id'] != 1 && $utilisateur['permissions'] === '*') : ?>
-                                <div class="flex space-x-3 border-t border-[#4a525d] pt-4">
-                                    <button onclick="showChangePasswordOverlay(<?php echo $user['id']; ?>)"
-                                        class="flex-1 bg-[#4a525d] hover:bg-[#5a6470] text-white text-sm px-4 py-2 rounded-lg transition-all">
-                                        <i class="bi bi-key-fill mr-2"></i>Password
-                                    </button>
+        <?php if ($utilisateur['permissions'] === '*') : ?>
+            <div class="flex space-x-3 border-t border-[#4a525d] pt-4">
+                <button onclick="showChangePasswordOverlay(<?php echo $user['id']; ?>)"
+                    class="flex-1 bg-[#4a525d] hover:bg-[#5a6470] text-white text-sm px-4 py-2 rounded-lg transition-all">
+                    <i class="bi bi-key-fill mr-2"></i>Password
+                </button>
 
-                                    <button onclick="showChangePermissionsOverlay(<?php echo $user['id']; ?>, '<?php echo $user['permissions']; ?>')"
-                                        class="flex-1 bg-[#4a525d] hover:bg-[#5a6470] text-white text-sm px-4 py-2 rounded-lg transition-all">
-                                        <i class="bi bi-shield-lock-fill mr-2"></i>Permissions
-                                    </button>
+                <button onclick="showChangePermissionsOverlay(<?php echo $user['id']; ?>, '<?php echo $user['permissions']; ?>')"
+                    class="flex-1 bg-[#4a525d] hover:bg-[#5a6470] text-white text-sm px-4 py-2 rounded-lg transition-all">
+                    <i class="bi bi-shield-lock-fill mr-2"></i>Permissions
+                </button>
 
-                                    <form method="post" class="flex-1" onsubmit="return confirmDelete()">
-                                        <input type="hidden" name="user_id" value="<?php echo $user['id']; ?>">
-                                        <input type="hidden" name="user_email" value="<?php echo $user['email']; ?>">
-                                        <button type="submit" name="delete_user"
-                                            class="w-full bg-red-500/20 hover:bg-red-500/30 text-red-400 text-sm px-4 py-2 rounded-lg transition-all">
-                                            <i class="bi bi-trash-fill mr-2"></i>Supprimer
-                                        </button>
-                                    </form>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                        <?php endif; ?>
-                    <?php endforeach; ?>
+                <?php if ($user['id'] != 1): ?>
+                <form method="post" class="flex-1" onsubmit="return confirmDelete()">
+                    <input type="hidden" name="user_id" value="<?php echo $user['id']; ?>">
+                    <input type="hidden" name="user_email" value="<?php echo $user['email']; ?>">
+                    <button type="submit" name="delete_user"
+                        class="w-full bg-red-500/20 hover:bg-red-500/30 text-red-400 text-sm px-4 py-2 rounded-lg transition-all">
+                        <i class="bi bi-trash-fill mr-2"></i>Supprimer
+                    </button>
+                </form>
+                <?php endif; ?>
+            </div>
+            <?php
+            if ($twofa_enabled === 1 && $user['id'] != 1): ?>
+                <form method="post" class="mt-3">
+                    <input type="hidden" name="disable_2fa_user_id" value="<?= $user['id'] ?>">
+                    <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white text-sm px-4 py-2 rounded-lg transition-all"
+                        onclick="return confirm('Désactiver la 2FA pour cet utilisateur ?')">
+                        <i class="bi bi-shield-x mr-2"></i>Désactiver la 2FA
+                    </button>
+                </form>
+            <?php endif; ?>
+        <?php endif; ?>
+    </div>
+<?php endforeach; ?>
                 </div>
             </div>
 
@@ -458,33 +499,34 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <span class="text-gray-300">Purger les logs</span>
                             </label>
 
-                            <label class="flex items-center space-x-3 hover:bg-[#3b424b]/50 p-2 rounded-lg transition-all">
+                            <label class="flex items-center space-x-3 hover:bg-[#4a525d]/50 p-2 rounded-lg transition-all">
                                 <input type="checkbox" name="permissions[]" value="logs_export" id="perm_logs_export"
                                     class="form-checkbox h-5 w-5 text-indigo-600 border-2 border-[#4a525d] rounded focus:ring-indigo-500">
                                 <span class="text-gray-300">Export Logs</span>
                             </label>
 
-                            <label class="flex items-center space-x-3 hover:bg-[#3b424b]/50 p-2 rounded-lg transition-all">
+                            <label class="flex items-center space-x-3 hover:bg-[#4a525d]/50 p-2 rounded-lg transition-all">
                                 <input type="checkbox" name="permissions[]" value="file_access" id="perm_file_access"
                                     class="form-checkbox h-5 w-5 text-indigo-600 border-2 border-[#4a525d] rounded focus:ring-indigo-500">
                                 <span class="text-gray-300">Accès aux fichiers</span>
                             </label>
 
-                            <label class="flex items-center space-x-3 hover:bg-[#3b424b]/50 p-2 rounded-lg transition-all">
+                            <label class="flex items-center space-x-3 hover:bg-[#4a525d]/50 p-2 rounded-lg transition-all">
                                 <input type="checkbox" name="permissions[]" value="register_users" id="perm_register_users"
                                 class="form-checkbox h-5 w-5 text-indigo-600 border-2 border-[#4a525d] rounded focus:ring-indigo-500">
                                 <span class="text-gray-300">Créer des utilisateurs</span>
                             </label>
 
-                            <label class="flex items-center space-x-3 hover:bg-[#3b424b]/50 p-2 rounded-lg transition-all">
+                            <label class="flex items-center space-x-3 hover:bg-[#4a525d]/50 p-2 rounded-lg transition-all">
+                                <input type="checkbox" name="permissions[]" value="delete_users" id="perm_delete_users"
+                                    class="form-checkbox h-5 w-5 text-indigo-600 border-2 border-[#4a525d] rounded focus:ring-indigo-500">
+                                <span class="text-gray-300">Supprimer des utilisateurs</span>
+                            </label>
+
+                            <label class="flex items-center space-x-3 hover:bg-[#4a525d]/50 p-2 rounded-lg transition-all">
                                 <input type="checkbox" name="permissions[]" value="export_import" id="perm_export_import"
                                     class="form-checkbox h-5 w-5 text-indigo-600 border-2 border-[#4a525d] rounded focus:ring-indigo-500">
                                 <span class="text-gray-300">Exporter/Importer</span>
-                            </label>
-                            <label class="flex items-center space-x-3 hover:bg-[#4a525d]/50 p-2 rounded-lg transition-all">
-                                <input type="checkbox" name="permissions[]" value="update_buttons" id="perm_update_buttons"
-                                    class="form-checkbox h-5 w-5 text-indigo-600 border-2 border-[#4a525d] rounded focus:ring-indigo-500">
-                                <span class="text-gray-300">Update buttons</span>
                             </label>
                         </div>
 
@@ -516,17 +558,16 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                 function showChangePermissionsOverlay(userId, permissions) {
                     document.getElementById('changePermissionsUserId').value = userId;
-                    
                     const permArray = permissions.split(',');
+
                     document.getElementById('perm_logs_view').checked = permArray.includes('logs_view');
                     document.getElementById('perm_purge_logs').checked = permArray.includes('purge_logs');
                     document.getElementById('perm_logs_export').checked = permArray.includes('logs_export');
-
                     document.getElementById('perm_file_access').checked = permArray.includes('file_access');
                     document.getElementById('perm_register_users').checked = permArray.includes('register_users');
+                    document.getElementById('perm_delete_users').checked = permArray.includes('delete_users');
                     document.getElementById('perm_export_import').checked = permArray.includes('export_import');
-                    document.getElementById('perm_update_buttons').checked = permArray.includes('update_buttons');
-                    
+
                     document.getElementById('changePermissionsOverlay').classList.remove('hidden');
                     document.getElementById('changePermissionsOverlay').classList.add('flex');
                 }
@@ -565,6 +606,64 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         return result.isConfirmed;
                     });
                 }
+
+                document.addEventListener('DOMContentLoaded', function() {
+                    const permDeleteUsersCreate = document.getElementById('perm_delete_users_create');
+                    const permRegisterUsersCreate = document.getElementById('perm_register_users_create');
+                    const permPurgeLogsCreate = document.getElementById('perm_purge_logs_create');
+                    const permLogsExportCreate = document.getElementById('perm_logs_export_create');
+                    const permLogsViewCreate = document.getElementById('perm_logs_view_create');
+
+                    if (permDeleteUsersCreate && permRegisterUsersCreate) {
+                        permDeleteUsersCreate.addEventListener('change', function() {
+                            if (this.checked) {
+                                permRegisterUsersCreate.checked = true;
+                            }
+                        });
+                    }
+                    if (permPurgeLogsCreate && permLogsViewCreate) {
+                        permPurgeLogsCreate.addEventListener('change', function() {
+                            if (this.checked) {
+                                permLogsViewCreate.checked = true;
+                            }
+                        });
+                    }
+                    if (permLogsExportCreate && permLogsViewCreate) {
+                        permLogsExportCreate.addEventListener('change', function() {
+                            if (this.checked) {
+                                permLogsViewCreate.checked = true;
+                            }
+                        });
+                    }
+
+                    const permDeleteUsers = document.getElementById('perm_delete_users');
+                    const permRegisterUsers = document.getElementById('perm_register_users');
+                    const permPurgeLogs = document.getElementById('perm_purge_logs');
+                    const permLogsExport = document.getElementById('perm_logs_export');
+                    const permLogsView = document.getElementById('perm_logs_view');
+
+                    if (permDeleteUsers && permRegisterUsers) {
+                        permDeleteUsers.addEventListener('change', function() {
+                            if (this.checked) {
+                                permRegisterUsers.checked = true;
+                            }
+                        });
+                    }
+                    if (permPurgeLogs && permLogsView) {
+                        permPurgeLogs.addEventListener('change', function() {
+                            if (this.checked) {
+                                permLogsView.checked = true;
+                            }
+                        });
+                    }
+                    if (permLogsExport && permLogsView) {
+                        permLogsExport.addEventListener('change', function() {
+                            if (this.checked) {
+                                permLogsView.checked = true;
+                            }
+                        });
+                    }
+                });
             </script>
 
             <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

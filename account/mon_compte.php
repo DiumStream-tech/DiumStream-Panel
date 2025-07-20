@@ -20,6 +20,9 @@ $success_message = $error_message = '';
 
 $tfa = new TwoFactorAuth('Panel Launcher');
 
+$twofa_enabled = isset($user['two_factor_enabled']) ? (bool)$user['two_factor_enabled'] : false;
+$secret = $user['two_factor_secret'] ?? null;
+
 if (isset($_POST['confirm_2fa'])) {
     $entered_code = $_POST['2fa_code'];
     $secret = $_SESSION['temp_2fa_secret'];
@@ -80,6 +83,58 @@ if (isset($_POST['change_password'])) {
     } else {
         $error_message = "Mot de passe actuel incorrect.";
     }
+}
+
+if (!isset($_SESSION['user_token'])) {
+    header('Location: connexion.php');
+    exit();
+}
+
+$stmt = $pdo->prepare("SELECT * FROM users WHERE token = :token");
+$stmt->execute([':token' => $_SESSION['user_token']]);
+$user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$user) {
+    header('Location: connexion.php');
+    exit();
+}
+
+$tfa = new TwoFactorAuth('VotrePanel');
+$twofa_enabled = isset($user['two_factor_enabled']) ? (bool)$user['two_factor_enabled'] : false;
+$secret = $user['two_factor_secret'] ?? null;
+$success = $error = null;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['enable_2fa'])) {
+        if (empty($secret)) {
+            $secret = $tfa->createSecret();
+            $stmt = $pdo->prepare("UPDATE users SET two_factor_secret = :secret WHERE id = :id");
+            $stmt->execute([':secret' => $secret, ':id' => $user['id']]);
+        }
+    }
+    if (isset($_POST['verify_2fa']) && isset($_POST['code'])) {
+        $code = trim($_POST['code']);
+        if ($tfa->verifyCode($secret, $code)) {
+            $stmt = $pdo->prepare("UPDATE users SET two_factor_enabled = 1 WHERE id = :id");
+            $stmt->execute([':id' => $user['id']]);
+            $twofa_enabled = true;
+            $success = "2FA activé avec succès.";
+        } else {
+            $error = "Code invalide.";
+        }
+    }
+    if (isset($_POST['disable_2fa'])) {
+        $stmt = $pdo->prepare("UPDATE users SET two_factor_enabled = 0, two_factor_secret = NULL WHERE id = :id");
+        $stmt->execute([':id' => $user['id']]);
+        $twofa_enabled = false;
+        $secret = null;
+        $success = "2FA désactivé.";
+    }
+    $stmt = $pdo->prepare("SELECT * FROM users WHERE token = :token");
+    $stmt->execute([':token' => $_SESSION['user_token']]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    $twofa_enabled = isset($user['two_factor_enabled']) ? (bool)$user['two_factor_enabled'] : false;
+    $secret = $user['two_factor_secret'] ?? null;
 }
 ?>
 
